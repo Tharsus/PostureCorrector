@@ -4,7 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui \
+            multimedia
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -32,3 +33,19 @@ HEADERS += \
 
 FORMS += \
         mainwindow.ui
+
+INCLUDEPATH += C:\dlib_mingw\
+
+LIBS += -L"C:\dlib_mingw\build"
+LIBS += -ldlib
+
+
+INCLUDEPATH += C:\opencv\build\include
+
+LIBS += C:\opencv_mingw_build\bin\libopencv_core340.dll
+LIBS += C:\opencv_mingw_build\bin\libopencv_highgui340.dll
+LIBS += C:\opencv_mingw_build\bin\libopencv_imgcodecs340.dll
+LIBS += C:\opencv_mingw_build\bin\libopencv_imgproc340.dll
+LIBS += C:\opencv_mingw_build\bin\libopencv_features2d340.dll
+LIBS += C:\opencv_mingw_build\bin\libopencv_calib3d340.dll
+LIBS += C:\opencv_mingw_build\bin\libopencv_videoio340.dll
