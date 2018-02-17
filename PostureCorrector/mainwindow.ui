@@ -13,6 +13,13 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="res.qrc">
+    <normaloff>:/myappico.png</normaloff>:/myappico.png</iconset>
+  </property>
+  <property name="toolTipDuration">
+   <number>3</number>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QLabel" name="label_displayFace">
     <property name="geometry">
@@ -159,6 +166,8 @@
   <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="res.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -19,7 +19,10 @@ MainWindow::MainWindow(QWidget *parent) :
     right_pose = true;
 
     alertsound = new QMediaPlayer();
-    alertsound->setMedia(QUrl("C://Windows//media//Alarm10.wav"));
+    alertsound->setMedia(QUrl("C://Windows//media//Windows Notify System Generic.wav"));
+
+    trayIcon = new QSystemTrayIcon(this);
+    trayIcon->setIcon(QIcon(":/myappico.png"));
 }
 
 MainWindow::~MainWindow()
@@ -108,11 +111,13 @@ void MainWindow::update_window()
                     if (compare(shape) != 0) {
                         right_pose = false;
                         sound_alert();
+                        tray_notification(true);
                     }
                 } else {
                     if (!right_pose) {
                         if (compare(shape) == 0) {
                             right_pose = true;
+                            tray_notification(false);
                         }
                     }
                 }
@@ -142,7 +147,6 @@ int MainWindow::compare(full_object_detection current_pose)
 {
     int pose_problems = 0;
     if (current_pose.part(8).y() > calibrated_pose.part(8).y()+10 || current_pose.part(8).y() < calibrated_pose.part(8).y()-10) {
-        //mySystemTrayIcon = new QSystemTrayIcon;
         pose_problems = 1;
     }
     return pose_problems;
@@ -150,14 +154,23 @@ int MainWindow::compare(full_object_detection current_pose)
 
 void MainWindow::sound_alert()
 {
-    /*QMediaPlayer *alert = new QMediaPlayer();
-    alert->setMedia(QUrl(path));
-    if (alert->state() == QMediaPlayer::PlayingState) {
-        cout << "AQUI" << endl;
-    }*/
     if (alertsound->state() == QMediaPlayer::PlayingState) {
         alertsound->setPosition(0);
     } else {
         alertsound->play();
+    }
+}
+
+void MainWindow::tray_notification(boolean activate)
+{
+    //implementar redirecionamento do tray quando clicar
+    //implementar mensagem quando hover
+
+    if (activate) {
+        trayIcon->show();
+        trayIcon->showMessage("Warning", "Your posture is not adequate.", QSystemTrayIcon::Warning);
+        trayIcon->messageClicked();
+    } else {
+        trayIcon->hide();
     }
 }

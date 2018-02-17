@@ -64,11 +64,13 @@ private:
     boolean right_pose;
 
     QMediaPlayer *alertsound;
+    QSystemTrayIcon *trayIcon;
 
     void show_frame(Mat &);
 
     int compare(full_object_detection current_pose);
     void sound_alert();
+    void tray_notification(boolean);
 };
 
 #endif // MAINWINDOW_H

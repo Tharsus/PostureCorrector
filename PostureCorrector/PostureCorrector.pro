@@ -49,3 +49,6 @@ LIBS += C:\opencv_mingw_build\bin\libopencv_imgproc340.dll
 LIBS += C:\opencv_mingw_build\bin\libopencv_features2d340.dll
 LIBS += C:\opencv_mingw_build\bin\libopencv_calib3d340.dll
 LIBS += C:\opencv_mingw_build\bin\libopencv_videoio340.dll
+
+RESOURCES += \
+    res.qrc
