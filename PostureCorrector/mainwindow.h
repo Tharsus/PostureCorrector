@@ -14,6 +14,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <dlib/opencv.h>
+//#include <dlib/opencv.hpp>
 #include <dlib/image_io.h>
 #include <dlib/gui_widgets.h>
 #include <dlib/image_processing.h>
@@ -69,8 +70,25 @@ private:
     void show_frame(Mat &);
 
     int compare(full_object_detection current_pose);
+    int posture_score(full_object_detection current_pose);
     void sound_alert();
     void tray_notification(boolean);
+
+    void face_rotation(full_object_detection current_pose);
+
+
+
+    /*int mImageW = 0;
+    int mImageH = 0;
+
+    virtual inline int det(cv::Mat& image) {
+        mImageW = image.cols;
+        mImageH = image.rows;
+    }
+
+    //Create two new functions
+    int getFrameWidth() {return mImageW;}
+    int getFrameHeight() {return mImageH;}*/
 };
 
 #endif // MAINWINDOW_H
