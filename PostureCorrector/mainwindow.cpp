@@ -24,6 +24,21 @@ MainWindow::MainWindow(QWidget *parent) :
 
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setIcon(QIcon(":/myappico.png"));
+
+    // Rotation
+    ui->rotationThreshold->setValue(20);
+    ui->rotationDisplay->setValue(ui->rotationThreshold->value());
+    angleThreshold = ui->rotationThreshold->value();
+
+    // Height
+    ui->heightThreshold->setValue(200);
+    ui->heightDisplay->setValue(ui->heightThreshold->value());
+    heightThreshold = ui->heightThreshold->value();
+
+    // Proximity
+    ui->proximityThreshold->setValue(1000);
+    ui->proximityDisplay->setValue(ui->proximityThreshold->value());
+    proximityThreshold = ui->proximityThreshold->value();
 }
 
 MainWindow::~MainWindow()
@@ -47,7 +62,7 @@ void MainWindow::on_pushButton_Start_clicked()
         timer->start(50); //in miliseconds: 50ms = 0.05s => will grab a frame every 50ms = 20 frames/second
 
         detector = get_frontal_face_detector();
-        deserialize("C:/shape_predictor_68_face_landmarks.dat") >> shape_model;
+        deserialize("C:/shape_predictor_68_face_landmarks.dat") >> shape_predictor;
     }
 }
 
@@ -71,11 +86,11 @@ void MainWindow::on_pushButton_Calibrate_clicked()
     calibrate = true;
 }
 
-void MainWindow::update_window()
+/*void MainWindow::update_window()
 {
     cap >> frame;
-    //cv::resize(frame, frame, cv::Size(), 1.0/4, 1.0/4);
 
+    //convert opencv image to dlib image
     array2d<bgr_pixel> dlib_image;
     assign_image(dlib_image, cv_image<bgr_pixel>(frame));
 
@@ -85,7 +100,7 @@ void MainWindow::update_window()
     std::vector<full_object_detection> shapes;
 
     for (unsigned long i=0; i < detected_faces.size(); i++) {
-        full_object_detection shape = shape_model(dlib_image, detected_faces[i]);
+        full_object_detection shape = shape_predictor(dlib_image, detected_faces[i]);
 
         shapes.push_back(shape);
 
@@ -122,6 +137,68 @@ void MainWindow::update_window()
                         }
                     }
                 }
+            }
+        }
+    }
+    show_frame(frame);
+}*/
+
+void MainWindow::update_window()
+{
+    full_object_detection faceLandmarks;
+
+    if (getNumberOfDetectedFaces(faceLandmarks) == 1) {
+        std::vector<double> facePosition = get_facePosition(faceLandmarks);
+
+        if (calibrate) {
+            calibrated_pose = faceLandmarks;
+            calibrated_facePosition = facePosition;
+            ui->checkBox->setChecked(true);
+            calibrate=false;
+            calibrated=true;
+        }
+
+        for (unsigned j=0; j<68; j++) {
+            circle(frame, Point(faceLandmarks.part(j).x(), faceLandmarks.part(j).y()), 2, Scalar( 0, 0, 255), 1, LINE_AA);
+
+            if (calibrated) {
+                circle(frame, Point(calibrated_pose.part(j).x(), calibrated_pose.part(j).y()), 2, Scalar( 0, 255, 0), 1, LINE_AA);
+            }
+            if (calibrated) {
+                // Compare current with calibrated postures
+                if (right_pose) {
+                    // Roll left
+                    if (get_badPosture(facePosition) == 1) {
+                        right_pose = false;
+                        //sound_alert();
+                        tray_notification(true, "Left");
+                    }
+                    // Roll right
+                    else if (get_badPosture(facePosition) == 2) {
+                        right_pose = false;
+                        tray_notification(true, "Right");
+                    }
+                    // low height
+                    else if (get_badPosture(facePosition) == 4) {
+                        right_pose = false;
+                        tray_notification(true, "Height");
+                    }
+                    // too close
+                    else if (get_badPosture(facePosition) == 8) {
+                        right_pose = false;
+                        tray_notification(true, "Proximity");
+                    }
+                } else {
+                    if (get_badPosture(facePosition) == 0) {
+                        right_pose = true;
+                        tray_notification(false, "");
+                    }
+                }
+
+
+                cout << "\nRotation angle: " << facePosition[5] << "\t" << calibrated_facePosition[5] << endl;
+                cout << "Height: " << facePosition[1] << "\t" << calibrated_facePosition[1] << endl;
+                cout << "Proximity: " << facePosition[2] << "\t" << calibrated_facePosition[2] << endl;
             }
         }
     }
@@ -188,21 +265,21 @@ void MainWindow::sound_alert()
     }
 }
 
-void MainWindow::tray_notification(boolean activate)
+void MainWindow::tray_notification(boolean activate, QString message)
 {
     //implementar redirecionamento do tray quando clicar
     //implementar mensagem quando hover
 
     if (activate) {
         trayIcon->show();
-        trayIcon->showMessage("Warning", "Your posture is not adequate.", QSystemTrayIcon::Warning);
+        trayIcon->showMessage("Warning", message, QSystemTrayIcon::Warning);
         trayIcon->messageClicked();
     } else {
         trayIcon->hide();
     }
 }
 
-void MainWindow::face_rotation(full_object_detection current_pose)
+/*void MainWindow::face_rotation(full_object_detection current_pose)
 {
     // Read input image
     cv::Mat im = frame;
@@ -251,10 +328,10 @@ void MainWindow::face_rotation(full_object_detection current_pose)
     projectPoints(nose_end_point3D, rotation_vector, translation_vector, camera_matrix, dist_coeffs, nose_end_point2D);
 
 
-    /*for(unsigned int i=0; i < image_points.size(); i++)
+    for(unsigned int i=0; i < image_points.size(); i++)
     {
         circle(im, image_points[i], 3, Scalar(0,0,255), -1);
-    }*/
+    }
 
     cv::line(im,image_points[0], nose_end_point2D[0], cv::Scalar(255,0,0), 2);
 
@@ -262,10 +339,6 @@ void MainWindow::face_rotation(full_object_detection current_pose)
     //cout << "Translation Vector: " << translation_vector << endl;
 
     //cout <<  nose_end_point2D << endl;
-
-
-
-
 
 
     Mat rotation_matrix, mtxR, mtxQ;
@@ -276,4 +349,137 @@ void MainWindow::face_rotation(full_object_detection current_pose)
     cout << "yaw: " << euler_angles[1] << endl; // esquerda/direita
     cout << "roll: " << euler_angles[2] << endl; // rotação
 
+    cout << "\nVector: " << translation_vector << endl;
+}*/
+
+unsigned int MainWindow::getNumberOfDetectedFaces(full_object_detection &shape)
+{
+    cap >> frame;
+
+    //convert opencv image to dlib image
+    array2d<bgr_pixel> dlib_image;
+    assign_image(dlib_image, cv_image<bgr_pixel>(frame));
+
+    std::vector<dlib::rectangle> detected_faces = detector(dlib_image);
+
+    if (detected_faces.size() == 1) {
+        // Get face landmarks
+        shape = shape_predictor(dlib_image, detected_faces[0]);
+    }
+
+    return detected_faces.size();
+}
+
+//void MainWindow::FacePosition(full_object_detection current_pose, double x, double y, double z, double pitch, double yaw, double roll)
+std::vector<double> MainWindow::get_facePosition(full_object_detection current_pose)
+{
+    // 2D image points obtained from DLIB
+    std::vector<cv::Point2d> image_points;
+    image_points.push_back( cv::Point2d( current_pose.part(30).x(), current_pose.part(30).y()) );   // Nose tip
+    image_points.push_back( cv::Point2d( current_pose.part(8).x(), current_pose.part(8).y()) );     // Chin
+    image_points.push_back( cv::Point2d( current_pose.part(36).x(), current_pose.part(36).y()) );   // Left eye left corner
+    image_points.push_back( cv::Point2d( current_pose.part(45).x(), current_pose.part(45).y()) );   // Right eye right corner
+    image_points.push_back( cv::Point2d( current_pose.part(48).x(), current_pose.part(48).y()) );   // Left Mouth corner
+    image_points.push_back( cv::Point2d( current_pose.part(54).x(), current_pose.part(54).y()) );   // Right mouth corner
+
+    // 3D model points.
+    std::vector<cv::Point3d> model_points;
+    model_points.push_back(cv::Point3d(0.0, 0.0, 0.0));             // Nose tip
+    model_points.push_back(cv::Point3d(0.0, -330.0, -65.0));        // Chin
+    model_points.push_back(cv::Point3d(-225.0, 170.0, -135.0));     // Left eye left corner
+    model_points.push_back(cv::Point3d(225.0, 170.0, -135.0));      // Right eye right corner
+    model_points.push_back(cv::Point3d(-150.0, -150.0, -125.0));    // Left Mouth corner
+    model_points.push_back(cv::Point3d(150.0, -150.0, -125.0));     // Right mouth corner
+
+    // Camera internals
+    double focal_length = frame.cols; // Approximate focal length.
+    Point2d center = cv::Point2d(frame.cols/2,frame.rows/2);
+    cv::Mat camera_matrix = (cv::Mat_<double>(3,3) << focal_length, 0, center.x, 0 , focal_length, center.y, 0, 0, 1);
+    cv::Mat dist_coeffs = cv::Mat::zeros(4,1,cv::DataType<double>::type); // Assuming no lens distortion
+
+    // Output rotation and translation
+    cv::Mat rotation_vector; // Rotation in axis-angle form
+    cv::Mat translation_vector;
+
+    // Solve for pose
+    // PNPRansac more stable than the PNP version
+    cv::solvePnP(model_points, image_points, camera_matrix, dist_coeffs, rotation_vector, translation_vector);
+
+
+    // Get Euler angles through the rotation_vector
+    Mat rotation_matrix, mtxR, mtxQ;
+    cv::Rodrigues(rotation_vector, rotation_matrix);
+    cv::Vec3d euler_angles = RQDecomp3x3(rotation_matrix, mtxR, mtxQ);
+
+    /* As the camera, looking in the object position:
+     *
+     * Z -> X
+     * |
+     * v
+     * Y
+     *
+     * x increases as the object goes to the right (user goes to the left)
+     *  pitch = tilt looking to the left/right
+     * y increases as the object goes down (user bends down)
+     *  yaw = tilt looking up/down
+     * z increases as the object get away from camera (user goes back)
+     *  roll = tilt left down, but looking to the camera
+     */
+
+    /*pitch = euler_angles[0];
+    yaw = euler_angles[1];
+    roll = euler_angles[2];
+    x = translation_vector.at<double>(0);
+    y = translation_vector.at<double>(1);
+    z = translation_vector.at<double>(2);*/
+
+    std::vector<double> facePosition(translation_vector);
+    facePosition.push_back(euler_angles[0]);
+    facePosition.push_back(euler_angles[1]);
+    facePosition.push_back(euler_angles[2]);
+
+    return facePosition;
+}
+
+int MainWindow::get_badPosture(std::vector<double> facePosition)
+{
+    int posture = 0;
+
+    // Analyze roll of user
+    if (facePosition[5] > calibrated_facePosition[5] + angleThreshold) {
+        posture = 1;
+    }
+    else if (facePosition[5] < calibrated_facePosition[5] - angleThreshold) {
+        posture = 2;
+    }
+
+    // Analyze height of user
+    if (facePosition[1] > calibrated_facePosition[1] + heightThreshold) {
+        posture = 4;
+    }
+
+    // Analyze proximity of user
+    if (facePosition[2] < calibrated_facePosition[2] - proximityThreshold) {
+        posture = 8;
+    }
+
+    return posture;
+}
+
+void MainWindow::on_rotationThreshold_valueChanged(int value)
+{
+    angleThreshold = value;
+    ui->rotationDisplay->setValue(value);
+}
+
+void MainWindow::on_heightThreshold_valueChanged(int value)
+{
+    heightThreshold = value;
+    ui->heightDisplay->setValue(value);
+}
+
+void MainWindow::on_proximityThreshold_valueChanged(int value)
+{
+    proximityThreshold = value;
+    ui->proximityDisplay->setValue(value);
 }

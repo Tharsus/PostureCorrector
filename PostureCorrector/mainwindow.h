@@ -46,6 +46,12 @@ private slots:
 
     void update_window();
 
+    void on_rotationThreshold_valueChanged(int value);
+
+    void on_heightThreshold_valueChanged(int value);
+
+    void on_proximityThreshold_valueChanged(int value);
+
 private:
     Ui::MainWindow *ui;
 
@@ -56,39 +62,36 @@ private:
     QImage qt_image;
 
     frontal_face_detector detector;
-    shape_predictor shape_model;
+    shape_predictor shape_predictor;
 
     boolean calibrate;
     boolean calibrated;
     full_object_detection calibrated_pose;
+    std::vector<double> calibrated_facePosition;
 
     boolean right_pose;
 
     QMediaPlayer *alertsound;
     QSystemTrayIcon *trayIcon;
 
+    int angleThreshold;
+    int heightThreshold;
+    int proximityThreshold;
+
     void show_frame(Mat &);
 
-    int compare(full_object_detection current_pose);
-    int posture_score(full_object_detection current_pose);
+    int compare(full_object_detection);
+    int posture_score(full_object_detection);
     void sound_alert();
-    void tray_notification(boolean);
+    void tray_notification(boolean, QString);
 
-    void face_rotation(full_object_detection current_pose);
+    void face_rotation(full_object_detection);
 
+    unsigned int getNumberOfDetectedFaces(full_object_detection &);
+    //void FacePosition(full_object_detection, double, double, double, double, double, double);
+    std::vector<double> get_facePosition(full_object_detection);
 
-
-    /*int mImageW = 0;
-    int mImageH = 0;
-
-    virtual inline int det(cv::Mat& image) {
-        mImageW = image.cols;
-        mImageH = image.rows;
-    }
-
-    //Create two new functions
-    int getFrameWidth() {return mImageW;}
-    int getFrameHeight() {return mImageH;}*/
+    int get_badPosture(std::vector<double>);
 };
 
 #endif // MAINWINDOW_H
