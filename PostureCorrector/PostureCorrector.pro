@@ -4,8 +4,11 @@
 #
 #-------------------------------------------------
 
-QT       += core gui \
-            multimedia
+QT       += core \
+            gui \
+            multimedia \
+            sql \
+            charts
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -26,10 +29,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+        checkposture.cpp
 
 HEADERS += \
-        mainwindow.h
+        mainwindow.h \
+        checkposture.h
 
 FORMS += \
         mainwindow.ui
@@ -51,4 +56,4 @@ LIBS += C:\opencv_mingw_build\bin\libopencv_calib3d340.dll
 LIBS += C:\opencv_mingw_build\bin\libopencv_videoio340.dll
 
 RESOURCES += \
-    res.qrc
+        res.qrc

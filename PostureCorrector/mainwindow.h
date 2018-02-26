@@ -12,6 +12,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 
 #include <dlib/opencv.h>
 //#include <dlib/opencv.hpp>
@@ -20,6 +21,14 @@
 #include <dlib/image_processing.h>
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_processing/render_face_detections.h>
+
+#include "checkposture.h"
+
+#include <QtSql>
+#include <QSqlDatabase>
+
+#include <QtWidgets>
+#include <QtCharts>
 
 using namespace std;
 using namespace cv;
@@ -74,14 +83,10 @@ private:
     QMediaPlayer *alertsound;
     QSystemTrayIcon *trayIcon;
 
-    int angleThreshold;
-    int heightThreshold;
-    int proximityThreshold;
+    CheckPosture checkPosture;
 
     void show_frame(Mat &);
 
-    int compare(full_object_detection);
-    int posture_score(full_object_detection);
     void sound_alert();
     void tray_notification(boolean, QString);
 
@@ -90,8 +95,6 @@ private:
     unsigned int getNumberOfDetectedFaces(full_object_detection &);
     //void FacePosition(full_object_detection, double, double, double, double, double, double);
     std::vector<double> get_facePosition(full_object_detection);
-
-    int get_badPosture(std::vector<double>);
 };
 
 #endif // MAINWINDOW_H

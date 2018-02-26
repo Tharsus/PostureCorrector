@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <opencv2/opencv.hpp>
+
+//Server=localhost\SQLEXPRESS;Database=master;Trusted_Connection=True;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -28,17 +29,19 @@ MainWindow::MainWindow(QWidget *parent) :
     // Rotation
     ui->rotationThreshold->setValue(20);
     ui->rotationDisplay->setValue(ui->rotationThreshold->value());
-    angleThreshold = ui->rotationThreshold->value();
 
     // Height
     ui->heightThreshold->setValue(200);
     ui->heightDisplay->setValue(ui->heightThreshold->value());
-    heightThreshold = ui->heightThreshold->value();
 
     // Proximity
     ui->proximityThreshold->setValue(1000);
     ui->proximityDisplay->setValue(ui->proximityThreshold->value());
-    proximityThreshold = ui->proximityThreshold->value();
+
+    // Set threshold in the object that handles posture checking
+    checkPosture.set_angleThreshold(ui->rotationThreshold->value());
+    checkPosture.set_heightThreshold(ui->heightThreshold->value());
+    checkPosture.set_proximityThreshold(ui->proximityThreshold->value());
 }
 
 MainWindow::~MainWindow()
@@ -84,6 +87,7 @@ void MainWindow::on_pushButton_Stop_clicked()
 void MainWindow::on_pushButton_Calibrate_clicked()
 {
     calibrate = true;
+    ui->pushButton_Calibrate->setEnabled(false);
 }
 
 /*void MainWindow::update_window()
@@ -149,11 +153,15 @@ void MainWindow::update_window()
 
     if (getNumberOfDetectedFaces(faceLandmarks) == 1) {
         std::vector<double> facePosition = get_facePosition(faceLandmarks);
+        checkPosture.set_posture(facePosition);
 
         if (calibrate) {
+            checkPosture.set_calibratedPosture(facePosition);
             calibrated_pose = faceLandmarks;
             calibrated_facePosition = facePosition;
             ui->checkBox->setChecked(true);
+            ui->pushButton_Calibrate->setText("Recalibrate");
+            ui->pushButton_Calibrate->setEnabled(true);
             calibrate=false;
             calibrated=true;
         }
@@ -165,40 +173,48 @@ void MainWindow::update_window()
                 circle(frame, Point(calibrated_pose.part(j).x(), calibrated_pose.part(j).y()), 2, Scalar( 0, 255, 0), 1, LINE_AA);
             }
             if (calibrated) {
+                int postureCheck = checkPosture.checkPosture();
+                //cout << checkPosture.checkPosture() << endl;
+
                 // Compare current with calibrated postures
                 if (right_pose) {
                     // Roll left
-                    if (get_badPosture(facePosition) == 1) {
+                    if (postureCheck == 1) {
                         right_pose = false;
                         //sound_alert();
                         tray_notification(true, "Left");
                     }
                     // Roll right
-                    else if (get_badPosture(facePosition) == 2) {
+                    else if (postureCheck == 2) {
                         right_pose = false;
                         tray_notification(true, "Right");
                     }
                     // low height
-                    else if (get_badPosture(facePosition) == 4) {
+                    else if (postureCheck == 4) {
                         right_pose = false;
                         tray_notification(true, "Height");
                     }
                     // too close
-                    else if (get_badPosture(facePosition) == 8) {
+                    else if (postureCheck == 8) {
                         right_pose = false;
                         tray_notification(true, "Proximity");
                     }
                 } else {
-                    if (get_badPosture(facePosition) == 0) {
+                    if (postureCheck == 0) {
                         right_pose = true;
                         tray_notification(false, "");
                     }
                 }
 
 
+                /*cout << "\nRotation angle: " << facePosition[5] << "\t" << calibrated_facePosition[5] << endl;
+                cout << "Height: " << facePosition[1] << "\t" << calibrated_facePosition[1] << endl;
+                cout << "Proximity: " << facePosition[2] << "\t" << calibrated_facePosition[2] << endl;*/
+
                 cout << "\nRotation angle: " << facePosition[5] << "\t" << calibrated_facePosition[5] << endl;
                 cout << "Height: " << facePosition[1] << "\t" << calibrated_facePosition[1] << endl;
                 cout << "Proximity: " << facePosition[2] << "\t" << calibrated_facePosition[2] << endl;
+                cout << "x: " << facePosition[0] << "\t" << calibrated_facePosition[0] << endl;
             }
         }
     }
@@ -219,41 +235,6 @@ void MainWindow::show_frame(Mat &image)
     //change color map so that it can be displayed in label_displayFace
     cvtColor(resized_image, resized_image, CV_BGR2RGB);
     ui->label_displayFace->setPixmap(QPixmap::fromImage(QImage(resized_image.data, resized_image.cols, resized_image.rows, QImage::Format_RGB888)));
-}
-
-int MainWindow::compare(full_object_detection current_pose)
-{
-    int pose_problems = 0;
-    if (current_pose.part(8).y() > calibrated_pose.part(8).y()+10 || current_pose.part(8).y() < calibrated_pose.part(8).y()-10) {
-        pose_problems = 1;
-    }
-    return pose_problems;
-}
-
-int MainWindow::posture_score(full_object_detection current_pose)
-{
-    int score = 0;
-
-    //detect horizontal and vertical movement
-    int horizontal_average = 0, vertical_average = 0, horizontal_average_calibrated = 0, vertical_average_calibrated = 0;
-    for (unsigned j=0; j<68; j++) {
-        horizontal_average += current_pose.part(j).x();
-        horizontal_average_calibrated += calibrated_pose.part(j).x();
-
-        vertical_average += current_pose.part(j).y();
-        vertical_average_calibrated += calibrated_pose.part(j).y();
-    }
-    horizontal_average = horizontal_average / 68;
-    horizontal_average_calibrated = horizontal_average_calibrated / 68;
-
-    vertical_average = vertical_average / 68;
-    vertical_average_calibrated = vertical_average_calibrated / 68;
-
-    //cout << "Corrente: " << horizontal_average << "\tCalibrado: " << horizontal_average_calibrated << endl;
-
-    //detect rotation
-
-    return score;
 }
 
 void MainWindow::sound_alert()
@@ -441,45 +422,20 @@ std::vector<double> MainWindow::get_facePosition(full_object_detection current_p
     return facePosition;
 }
 
-int MainWindow::get_badPosture(std::vector<double> facePosition)
-{
-    int posture = 0;
-
-    // Analyze roll of user
-    if (facePosition[5] > calibrated_facePosition[5] + angleThreshold) {
-        posture = 1;
-    }
-    else if (facePosition[5] < calibrated_facePosition[5] - angleThreshold) {
-        posture = 2;
-    }
-
-    // Analyze height of user
-    if (facePosition[1] > calibrated_facePosition[1] + heightThreshold) {
-        posture = 4;
-    }
-
-    // Analyze proximity of user
-    if (facePosition[2] < calibrated_facePosition[2] - proximityThreshold) {
-        posture = 8;
-    }
-
-    return posture;
-}
-
 void MainWindow::on_rotationThreshold_valueChanged(int value)
 {
-    angleThreshold = value;
     ui->rotationDisplay->setValue(value);
+    checkPosture.set_angleThreshold(value);
 }
 
 void MainWindow::on_heightThreshold_valueChanged(int value)
 {
-    heightThreshold = value;
     ui->heightDisplay->setValue(value);
+    checkPosture.set_heightThreshold(value);
 }
 
 void MainWindow::on_proximityThreshold_valueChanged(int value)
 {
-    proximityThreshold = value;
     ui->proximityDisplay->setValue(value);
+    checkPosture.set_proximityThreshold(value);
 }
