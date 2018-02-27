@@ -1,0 +1,59 @@
+#include "databaseconnection.h"
+
+DatabaseConnection::DatabaseConnection()
+{
+    db = QSqlDatabase::addDatabase("QODBC");
+}
+
+bool DatabaseConnection::openDatabase()
+{
+    QString serverName = "V14T\\SQLEXPRESS"; //"localhost\\SQLEXPRESS";
+    QString dbName = "PostureCorrectorDatabase";
+
+    QString dsn = QString("Driver={SQL SERVER};SERVER=%1;Database=%2;Trusted_Connection=Yes").arg(serverName).arg(dbName);
+
+    db.setDatabaseName(dsn);
+    if (!db.open()) {
+        return false;
+    }
+
+    lastID = get_lastID();
+    return true;
+}
+
+void DatabaseConnection::closeDatabase()
+{
+    db.close();
+}
+
+int DatabaseConnection::get_lastID()
+{
+    QSqlQuery query(db);
+    query.exec("SELECT id FROM PostureStatus WHERE id = (SELECT MAX(id) FROM PostureStatus);");
+    query.next();
+    int lastId = query.value(0).toInt();
+
+    return lastId;
+}
+
+bool DatabaseConnection::insertIntoDatabase(int type, int description)
+{
+    // Get current time and change for the DATETIME SQL format
+    QDateTime currentTime = QDateTime::currentDateTime();
+
+    // Prepare SQL insert statement
+    QSqlQuery query(db);
+    query.prepare("INSERT INTO PostureStatus (id, recordType, DateTime, description) "
+                  "VALUES (?, ?, ?, ?)");
+    query.addBindValue(lastID + 1);
+    query.addBindValue(type);
+    query.addBindValue(currentTime);
+    query.addBindValue(description);
+
+    if (query.exec()) {
+        lastID = lastID + 1;
+        return true;
+    }
+    return false;
+}
+

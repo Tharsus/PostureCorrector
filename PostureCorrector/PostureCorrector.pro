@@ -30,11 +30,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-        checkposture.cpp
+        checkposture.cpp \
+    databaseconnection.cpp
 
 HEADERS += \
         mainwindow.h \
-        checkposture.h
+        checkposture.h \
+    databaseconnection.h
 
 FORMS += \
         mainwindow.ui

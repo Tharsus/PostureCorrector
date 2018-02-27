@@ -23,6 +23,7 @@
 #include <dlib/image_processing/render_face_detections.h>
 
 #include "checkposture.h"
+#include "databaseconnection.h"
 
 #include <QtSql>
 #include <QSqlDatabase>
@@ -84,6 +85,8 @@ private:
     QSystemTrayIcon *trayIcon;
 
     CheckPosture checkPosture;
+
+    DatabaseConnection db;
 
     void show_frame(Mat &);
 
