@@ -30,30 +30,36 @@ int DatabaseConnection::get_lastID()
 {
     QSqlQuery query(db);
     query.exec("SELECT id FROM PostureStatus WHERE id = (SELECT MAX(id) FROM PostureStatus);");
-    query.next();
-    int lastId = query.value(0).toInt();
+    /*query.next();
+    int lastId = query.value(0).toInt();*/
+
+    int lastId = 0;
+    if (query.first()) {
+        lastId = query.value(0).toInt();
+    }
+
 
     return lastId;
 }
 
-bool DatabaseConnection::insertIntoDatabase(int type, int description)
+bool DatabaseConnection::insertIntoDatabase(int status)
 {
     // Get current time and change for the DATETIME SQL format
     QDateTime currentTime = QDateTime::currentDateTime();
 
     // Prepare SQL insert statement
     QSqlQuery query(db);
-    query.prepare("INSERT INTO PostureStatus (id, recordType, DateTime, description) "
-                  "VALUES (?, ?, ?, ?)");
+    query.prepare("INSERT INTO PostureStatus (id, status, DateTime) "
+                  "VALUES (?, ?, ?)");
     query.addBindValue(lastID + 1);
-    query.addBindValue(type);
+    query.addBindValue(status);
     query.addBindValue(currentTime);
-    query.addBindValue(description);
 
+    // Execute query
     if (query.exec()) {
+        // Update reference to last id in the database if insert was successfully
         lastID = lastID + 1;
         return true;
     }
     return false;
 }
-

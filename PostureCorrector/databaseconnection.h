@@ -17,9 +17,7 @@ public:
     bool openDatabase();
     void closeDatabase();
 
-    bool insertIntoDatabase(int, int);
-    bool selectFromDatabase();
-
+    bool insertIntoDatabase(int);
 
 private:
     QSqlDatabase db;

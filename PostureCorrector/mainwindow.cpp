@@ -53,7 +53,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    db.insertIntoDatabase(0, 1);
     delete ui;
 }
 
@@ -172,8 +171,6 @@ void MainWindow::update_window()
             ui->pushButton_Calibrate->setEnabled(true);
             calibrate=false;
             calibrated=true;
-
-            db.insertIntoDatabase(0,0);
         }
 
         for (unsigned j=0; j<68; j++) {
@@ -193,30 +190,31 @@ void MainWindow::update_window()
                         right_pose = false;
                         //sound_alert();
                         tray_notification(true, "Left");
-                        db.insertIntoDatabase(1, postureCheck);
+                        if (!db.insertIntoDatabase(postureCheck)) {}
                     }
                     // Roll right
                     else if (postureCheck == 2) {
                         right_pose = false;
                         tray_notification(true, "Right");
-                        db.insertIntoDatabase(1, postureCheck);
+                        if (!db.insertIntoDatabase(postureCheck)) {}
                     }
                     // low height
                     else if (postureCheck == 4) {
                         right_pose = false;
                         tray_notification(true, "Height");
-                        db.insertIntoDatabase(1, postureCheck);
+                        if (!db.insertIntoDatabase(postureCheck)) {}
                     }
                     // too close
                     else if (postureCheck == 8) {
                         right_pose = false;
                         tray_notification(true, "Proximity");
-                        db.insertIntoDatabase(1, postureCheck);
+                        if (!db.insertIntoDatabase(postureCheck)) {}
                     }
                 } else {
                     if (postureCheck == 0) {
                         right_pose = true;
                         tray_notification(false, "");
+                        if (!db.insertIntoDatabase(postureCheck)) {}
                     }
                 }
 
