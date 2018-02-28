@@ -98,6 +98,16 @@ private:
     unsigned int getNumberOfDetectedFaces(full_object_detection &);
     //void FacePosition(full_object_detection, double, double, double, double, double, double);
     std::vector<double> get_facePosition(full_object_detection);
+
+    void set_postureRecords(std::vector<unsigned int>, std::vector<QDateTime>);
+
+    int numberOfAlerts;
+    std::vector<qint64> durationOfAlert;
+    // 0 good
+    // 1
+    // 2
+    // 3
+    // 4
 };
 
 #endif // MAINWINDOW_H

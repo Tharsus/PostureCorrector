@@ -45,15 +45,27 @@ MainWindow::MainWindow(QWidget *parent) :
     checkPosture.set_proximityThreshold(ui->proximityThreshold->value());
 
 
-
     if (db.openDatabase()) {
         qDebug() << "opened";
+        std::vector<unsigned int> status;
+        std::vector<QDateTime> dateTime;
+
+        db.selectAllFromDatabase(status, dateTime);
+
+        set_postureRecords(status, dateTime);
+        qDebug() << numberOfAlerts;
+        qDebug() << durationOfAlert;
+
+
+        qDebug() << "end of reading";
     } else { qDebug() << "error"; }
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+
+    // include end and pause of software
 }
 
 void MainWindow::on_pushButton_Start_clicked()
@@ -450,4 +462,37 @@ void MainWindow::on_proximityThreshold_valueChanged(int value)
 {
     ui->proximityDisplay->setValue(value);
     checkPosture.set_proximityThreshold(value);
+}
+
+void MainWindow::set_postureRecords(std::vector<unsigned int> status, std::vector<QDateTime> dateTime)
+{
+    // Initialize variables
+    numberOfAlerts = 0;
+    durationOfAlert.push_back(0);
+    durationOfAlert.push_back(0);
+    durationOfAlert.push_back(0);
+    durationOfAlert.push_back(0);
+    durationOfAlert.push_back(0);
+
+    for (unsigned i=1; i<status.size(); i++) {
+        if (status.at(i-1) == 0) {
+            durationOfAlert.at(0) = dateTime.at(i-1).secsTo(dateTime.at(i));
+        }
+        else if (status.at(i-1) == 1) {
+            numberOfAlerts += 1;
+            durationOfAlert.at(1) = dateTime.at(i-1).secsTo(dateTime.at(i));
+        }
+        else if (status.at(i-1) == 2) {
+            numberOfAlerts += 1;
+            durationOfAlert.at(2) = dateTime.at(i-1).secsTo(dateTime.at(i));
+        }
+        else if (status.at(i-1) == 4) {
+            numberOfAlerts += 1;
+            durationOfAlert.at(3) = dateTime.at(i-1).secsTo(dateTime.at(i));
+        }
+        else if (status.at(i-1) == 8) {
+            numberOfAlerts += 1;
+            durationOfAlert.at(4) = dateTime.at(i-1).secsTo(dateTime.at(i));
+        }
+    }
 }

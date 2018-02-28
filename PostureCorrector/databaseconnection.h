@@ -10,6 +10,8 @@
 #include <iostream>
 #include <ctime>
 
+#include <vector>
+
 class DatabaseConnection
 {
 public:
@@ -18,12 +20,14 @@ public:
     void closeDatabase();
 
     bool insertIntoDatabase(int);
+    bool selectAllFromDatabase(std::vector<unsigned int> &, std::vector<QDateTime> &);
 
 private:
     QSqlDatabase db;
     int lastID;
 
     int get_lastID();
+
 };
 
 #endif // DATABASECONNECTION_H

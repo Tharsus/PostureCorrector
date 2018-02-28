@@ -63,3 +63,19 @@ bool DatabaseConnection::insertIntoDatabase(int status)
     }
     return false;
 }
+
+bool DatabaseConnection::selectAllFromDatabase(std::vector<unsigned int> &status, std::vector<QDateTime> &dateTime)
+{
+    QSqlQuery query(db);
+    if (!query.exec("SELECT * FROM PostureStatus")) {
+        return false;
+    }
+
+    while (query.next()) {
+        status.push_back(query.value(1).toUInt());
+        dateTime.push_back(query.value(2).toDateTime());
+    }
+
+    return true;
+}
+
