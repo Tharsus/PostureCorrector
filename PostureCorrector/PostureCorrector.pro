@@ -36,7 +36,8 @@ SOURCES += \
 HEADERS += \
         mainwindow.h \
         checkposture.h \
-    databaseconnection.h
+    databaseconnection.h \
+    list_of_states.h
 
 FORMS += \
         mainwindow.ui

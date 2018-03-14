@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include <QObject>
 
 #include <QMediaPlayer>
 #include <QSystemTrayIcon>
@@ -15,7 +16,6 @@
 #include <opencv2/opencv.hpp>
 
 #include <dlib/opencv.h>
-//#include <dlib/opencv.hpp>
 #include <dlib/image_io.h>
 #include <dlib/gui_widgets.h>
 #include <dlib/image_processing.h>
@@ -62,6 +62,9 @@ private slots:
 
     void on_proximityThreshold_valueChanged(int value);
 
+//public slots:
+    void notify(int);
+
 private:
     Ui::MainWindow *ui;
 
@@ -103,11 +106,6 @@ private:
 
     int numberOfAlerts;
     std::vector<qint64> durationOfAlert;
-    // 0 good
-    // 1
-    // 2
-    // 3
-    // 4
 };
 
 #endif // MAINWINDOW_H

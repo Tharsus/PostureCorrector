@@ -1,11 +1,11 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
-//Server=localhost\SQLEXPRESS;Database=master;Trusted_Connection=True;
+#include "checkposture.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
+    checkPosture(),
     db()
 {
     ui->setupUi(this);
@@ -27,6 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setIcon(QIcon(":/myappico.png"));
 
+    QObject::connect(&checkPosture, SIGNAL(badPosture(int)), this, SLOT(notify(int)));
+
     // Rotation
     ui->rotationThreshold->setValue(20);
     ui->rotationDisplay->setValue(ui->rotationThreshold->value());
@@ -38,11 +40,6 @@ MainWindow::MainWindow(QWidget *parent) :
     // Proximity
     ui->proximityThreshold->setValue(1000);
     ui->proximityDisplay->setValue(ui->proximityThreshold->value());
-
-    // Set threshold in the object that handles posture checking
-    checkPosture.set_angleThreshold(ui->rotationThreshold->value());
-    checkPosture.set_heightThreshold(ui->heightThreshold->value());
-    checkPosture.set_proximityThreshold(ui->proximityThreshold->value());
 
 
     if (db.openDatabase()) {
@@ -59,6 +56,72 @@ MainWindow::MainWindow(QWidget *parent) :
 
         qDebug() << "end of reading";
     } else { qDebug() << "error"; }
+
+
+
+
+
+
+
+    /*
+     * TESTING HOW TO PLOT A BARCHART
+     */
+
+    QtCharts::QBarSet *set0 = new QtCharts::QBarSet("Number of Ocurrencies");
+    *set0 << 50 << 65 << 45 << 30 << 15 << 7;
+
+    QtCharts::QBarSeries *barSeries = new QtCharts::QBarSeries();
+    barSeries->append(set0);
+
+    QtCharts::QChart *barChart = new QtCharts::QChart();
+    barChart->addSeries(barSeries);
+    barChart->setTitle("Simple barchart example");
+    barChart->setAnimationOptions(QtCharts::QChart::SeriesAnimations);
+
+    QStringList categories;
+    categories << "Jan" << "Feb" << "Mar" << "Apr" << "May" << "Jun";
+    QtCharts::QBarCategoryAxis *axis = new QtCharts::QBarCategoryAxis();
+    axis->append(categories);
+    barChart->createDefaultAxes();
+    barChart->setAxisX(axis, barSeries);
+
+    barChart->legend()->setVisible(true);
+    barChart->legend()->setAlignment(Qt::AlignBottom);
+
+    QtCharts::QChartView *barChartView = new QtCharts::QChartView(barChart);
+    barChartView->setRenderHint(QPainter::Antialiasing);
+
+
+    ui->chart_1->addWidget(barChartView);
+
+
+    /*
+     * TESTING HOW TO PLOT A PIECHART
+     */
+
+    QtCharts::QPieSeries *pieSeries = new QtCharts::QPieSeries();
+    pieSeries->append("Ok", 1);
+    pieSeries->append("Left", 2);
+    pieSeries->append("Right", 3);
+    pieSeries->append("Close", 4);
+    pieSeries->append("Down", 5);
+
+    QtCharts::QPieSlice *slice = pieSeries->slices().at(1);
+    slice->setExploded();
+    slice->setLabelVisible();
+    slice->setPen(QPen(Qt::darkGreen, 2));
+    slice->setBrush(Qt::green);
+
+    QtCharts::QChart *pieChart = new QtCharts::QChart();
+    pieChart->addSeries(pieSeries);
+    pieChart->setTitle("Simple piechart example");
+    pieChart->legend()->hide();
+
+    QtCharts::QChartView *pieChartView = new QtCharts::QChartView(pieChart);
+    pieChartView->setRenderHint(QPainter::Antialiasing);
+
+    ui->chart_2->addWidget(pieChartView);
+
 }
 
 MainWindow::~MainWindow()
@@ -107,7 +170,12 @@ void MainWindow::on_pushButton_Calibrate_clicked()
 {
     calibrate = true;
     ui->pushButton_Calibrate->setEnabled(false);
+    checkPosture.set_calibrateTrue();
 }
+
+void MainWindow::on_rotationThreshold_valueChanged(int value) { ui->rotationDisplay->setValue(value); }
+void MainWindow::on_heightThreshold_valueChanged(int value) { ui->heightDisplay->setValue(value); }
+void MainWindow::on_proximityThreshold_valueChanged(int value) { ui->proximityDisplay->setValue(value); }
 
 /*void MainWindow::update_window()
 {
@@ -166,7 +234,7 @@ void MainWindow::on_pushButton_Calibrate_clicked()
     show_frame(frame);
 }*/
 
-void MainWindow::update_window()
+/*void MainWindow::update_window()
 {
     full_object_detection faceLandmarks;
 
@@ -191,56 +259,37 @@ void MainWindow::update_window()
             if (calibrated) {
                 circle(frame, Point(calibrated_pose.part(j).x(), calibrated_pose.part(j).y()), 2, Scalar( 0, 255, 0), 1, LINE_AA);
             }
-            if (calibrated) {
-                int postureCheck = checkPosture.checkPosture();
-                //cout << checkPosture.checkPosture() << endl;
-
-                // Compare current with calibrated postures
-                if (right_pose) {
-                    // Roll left
-                    if (postureCheck == 1) {
-                        right_pose = false;
-                        //sound_alert();
-                        tray_notification(true, "Left");
-                        if (!db.insertIntoDatabase(postureCheck)) {}
-                    }
-                    // Roll right
-                    else if (postureCheck == 2) {
-                        right_pose = false;
-                        tray_notification(true, "Right");
-                        if (!db.insertIntoDatabase(postureCheck)) {}
-                    }
-                    // low height
-                    else if (postureCheck == 4) {
-                        right_pose = false;
-                        tray_notification(true, "Height");
-                        if (!db.insertIntoDatabase(postureCheck)) {}
-                    }
-                    // too close
-                    else if (postureCheck == 8) {
-                        right_pose = false;
-                        tray_notification(true, "Proximity");
-                        if (!db.insertIntoDatabase(postureCheck)) {}
-                    }
-                } else {
-                    if (postureCheck == 0) {
-                        right_pose = true;
-                        tray_notification(false, "");
-                        if (!db.insertIntoDatabase(postureCheck)) {}
-                    }
-                }
-
-
-                /*cout << "\nRotation angle: " << facePosition[5] << "\t" << calibrated_facePosition[5] << endl;
-                cout << "Height: " << facePosition[1] << "\t" << calibrated_facePosition[1] << endl;
-                cout << "Proximity: " << facePosition[2] << "\t" << calibrated_facePosition[2] << endl;*/
-
-                cout << "\nRotation angle: " << facePosition[5] << "\t" << calibrated_facePosition[5] << endl;
-                cout << "Height: " << facePosition[1] << "\t" << calibrated_facePosition[1] << endl;
-                cout << "Proximity: " << facePosition[2] << "\t" << calibrated_facePosition[2] << endl;
-                cout << "x: " << facePosition[0] << "\t" << calibrated_facePosition[0] << endl;
-            }
         }
+
+        if (calibrated) {
+            int postureCheck = checkPosture.checkPosture(ui->heightThreshold->value(), ui->proximityThreshold->value(), ui->rotationThreshold->value());
+            cout << postureCheck << endl;
+
+            cout << "\nRotation angle: " << facePosition[5] << "\t" << calibrated_facePosition[5] << endl;
+            cout << "Height: " << facePosition[1] << "\t" << calibrated_facePosition[1] << endl;
+            cout << "Proximity: " << facePosition[2] << "\t" << calibrated_facePosition[2] << endl;
+            cout << "x: " << facePosition[0] << "\t" << calibrated_facePosition[0] << endl;
+        }
+    }
+    show_frame(frame);
+}*/
+
+void MainWindow::update_window()
+{
+    cap >> frame;
+
+    checkPosture.checkFrame(frame);
+
+    if (calibrate && checkPosture.postureCalibrated()) {
+        ui->checkBox->setChecked(true);
+        ui->pushButton_Calibrate->setText("Recalibrate");
+        ui->pushButton_Calibrate->setEnabled(true);
+        calibrate=false;
+        calibrated=true;
+    }
+
+    if (calibrated) {
+        int postureCheck = checkPosture.checkPosture(ui->heightThreshold->value(), ui->proximityThreshold->value(), ui->rotationThreshold->value());
     }
     show_frame(frame);
 }
@@ -446,22 +495,42 @@ std::vector<double> MainWindow::get_facePosition(full_object_detection current_p
     return facePosition;
 }
 
-void MainWindow::on_rotationThreshold_valueChanged(int value)
+void MainWindow::notify(int postureCheck)
 {
-    ui->rotationDisplay->setValue(value);
-    checkPosture.set_angleThreshold(value);
-}
-
-void MainWindow::on_heightThreshold_valueChanged(int value)
-{
-    ui->heightDisplay->setValue(value);
-    checkPosture.set_heightThreshold(value);
-}
-
-void MainWindow::on_proximityThreshold_valueChanged(int value)
-{
-    ui->proximityDisplay->setValue(value);
-    checkPosture.set_proximityThreshold(value);
+    cout << "Status: " << postureCheck << endl;
+    if (right_pose) {
+        // Roll left
+        if (postureCheck == LOW_HEIGHT) {
+            right_pose = false;
+            //sound_alert();
+            tray_notification(true, "Too low!");
+            if (!db.insertIntoDatabase(postureCheck)) {}
+        }
+        // Roll right
+        else if (postureCheck == TOO_CLOSE) {
+            right_pose = false;
+            tray_notification(true, "Too close!");
+            if (!db.insertIntoDatabase(postureCheck)) {}
+        }
+        // low height
+        else if (postureCheck == ROLL_RIGHT) {
+            right_pose = false;
+            tray_notification(true, "Rolling to the right!");
+            if (!db.insertIntoDatabase(postureCheck)) {}
+        }
+        // too close
+        else if (postureCheck == ROLL_LEFT) {
+            right_pose = false;
+            tray_notification(true, "Rolling to the left!");
+            if (!db.insertIntoDatabase(postureCheck)) {}
+        }
+    } else {
+        if (postureCheck == CORRECT_POSTURE) {
+            right_pose = true;
+            tray_notification(false, "");
+            if (!db.insertIntoDatabase(postureCheck)) {}
+        }
+    }
 }
 
 void MainWindow::set_postureRecords(std::vector<unsigned int> status, std::vector<QDateTime> dateTime)

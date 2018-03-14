@@ -2,30 +2,60 @@
 #define CHECKPOSTURE_H
 
 #include <iostream>
+#include <QDebug>
+#include <QObject>
 #include <vector>
 
-class CheckPosture
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/opencv.hpp>
+
+#include <dlib/opencv.h>
+//#include <dlib/opencv.hpp>
+#include <dlib/image_io.h>
+#include <dlib/gui_widgets.h>
+#include <dlib/image_processing.h>
+#include <dlib/image_processing/frontal_face_detector.h>
+#include <dlib/image_processing/render_face_detections.h>
+
+#include "list_of_states.h"
+
+class CheckPosture : public QObject
 {
+    Q_OBJECT
+
 public:
     CheckPosture();
 
-    void set_angleThreshold(int);
-    void set_heightThreshold(int);
-    void set_proximityThreshold(int);
-
-    void set_calibratedPosture(std::vector<double>);
     void set_posture(std::vector<double>);
+    void set_calibratedPosture(std::vector<double>);
+    void set_calibrateTrue();
+    bool postureCalibrated();
 
-    int checkPosture(void);
+    void checkFrame(cv::Mat &);
+
+    int checkPosture(int, int, int);
+
+signals:
+    void badPosture(int);
 
 private:
-    int angleThreshold;
-    int heightThreshold;
-    int proximityThreshold;
+    dlib::frontal_face_detector detector;
+    dlib::shape_predictor shape_predictor;
 
+    std::vector<double> checkFacePosition(cv::Mat, dlib::full_object_detection);
+
+    unsigned int numberOfFaces;
+    std::vector<double> currentPosture;
     std::vector<double> calibratedPosture;
-    std::vector<double> posture;
+    dlib::full_object_detection calibratedLandmarks;
 
+    boolean calibrate;
+    boolean calibrated;
+
+    unsigned int state;
+    unsigned int current_state;
 };
 
 #endif // CHECKPOSTURE_H
