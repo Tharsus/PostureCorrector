@@ -31,10 +31,6 @@
 #include <QtWidgets>
 #include <QtCharts>
 
-using namespace std;
-using namespace cv;
-using namespace dlib;
-
 namespace Ui {
 class MainWindow;
 }
@@ -69,17 +65,14 @@ private:
     Ui::MainWindow *ui;
 
     QTimer *timer;
-    VideoCapture cap;
+    cv::VideoCapture cap;
 
-    Mat frame;
+    cv::Mat frame;
     QImage qt_image;
-
-    frontal_face_detector detector;
-    shape_predictor shape_predictor;
 
     boolean calibrate;
     boolean calibrated;
-    full_object_detection calibrated_pose;
+    dlib::full_object_detection calibrated_pose;
     std::vector<double> calibrated_facePosition;
 
     boolean right_pose;
@@ -91,16 +84,10 @@ private:
 
     DatabaseConnection db;
 
-    void show_frame(Mat &);
+    void show_frame(cv::Mat &);
 
     void sound_alert();
     void tray_notification(boolean, QString);
-
-    void face_rotation(full_object_detection);
-
-    unsigned int getNumberOfDetectedFaces(full_object_detection &);
-    //void FacePosition(full_object_detection, double, double, double, double, double, double);
-    std::vector<double> get_facePosition(full_object_detection);
 
     void set_postureRecords(std::vector<unsigned int>, std::vector<QDateTime>);
 

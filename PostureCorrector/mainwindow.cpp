@@ -136,18 +136,15 @@ void MainWindow::on_pushButton_Start_clicked()
     cap.open(0);
 
     if(!cap.isOpened()){
-        cout << "not able to open camera" << endl;
+        qDebug() << "not able to open camera";
     } else {
-        cout << "camera is opened" << endl;
+        qDebug() << "camera is opened";
         ui->pushButton_Start->setEnabled(false);
         ui->pushButton_Stop->setEnabled(true);
         ui->pushButton_Calibrate->setEnabled(true);
 
         connect(timer, SIGNAL(timeout()), this, SLOT(update_window()));
         timer->start(50); //in miliseconds: 50ms = 0.05s => will grab a frame every 50ms = 20 frames/second
-
-        detector = get_frontal_face_detector();
-        deserialize("C:/shape_predictor_68_face_landmarks.dat") >> shape_predictor;
     }
 }
 
@@ -159,10 +156,10 @@ void MainWindow::on_pushButton_Stop_clicked()
 
     disconnect(timer, SIGNAL(timeout()),this, SLOT(update_window()));
     cap.release();
-    cout << "camera is closed" << endl;
+    qDebug() << "camera is closed";
 
     //fill display with a black screen
-    Mat image = Mat::zeros(frame.size(),CV_8UC3);
+    cv::Mat image = cv::Mat::zeros(frame.size(),CV_8UC3);
     show_frame(image);
 }
 
@@ -193,20 +190,20 @@ void MainWindow::update_window()
     }
 
     if (calibrated) {
-        int postureCheck = checkPosture.checkPosture(ui->heightThreshold->value(), ui->proximityThreshold->value(), ui->rotationThreshold->value());
+        checkPosture.checkPosture(ui->heightThreshold->value(), ui->proximityThreshold->value(), ui->rotationThreshold->value());
     }
     show_frame(frame);
 }
 
-void MainWindow::show_frame(Mat &image)
+void MainWindow::show_frame(cv::Mat &image)
 {
     //resize image to the size of label_displayFace
-    Mat resized_image = image.clone();
+    cv::Mat resized_image = image.clone();
 
     int width_of_label = ui->label_displayFace->width();
     int height_of_label = ui->label_displayFace->height();
 
-    Size size(width_of_label, height_of_label);
+    cv::Size size(width_of_label, height_of_label);
     cv::resize(image, resized_image, size);
 
     //change color map so that it can be displayed in label_displayFace
@@ -239,7 +236,7 @@ void MainWindow::tray_notification(boolean activate, QString message)
 
 void MainWindow::notify(int postureCheck)
 {
-    cout << "Status: " << postureCheck << endl;
+    qDebug() << "Status: " << postureCheck;
     if (right_pose) {
         // Roll left
         if (postureCheck == LOW_HEIGHT) {
