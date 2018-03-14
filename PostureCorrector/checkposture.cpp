@@ -13,9 +13,9 @@ CheckPosture::CheckPosture() {
 void CheckPosture::set_posture(std::vector<double> receivedPosture) { currentPosture = receivedPosture; }
 void CheckPosture::set_calibratedPosture(std::vector<double> receivedPosture) { calibratedPosture = receivedPosture; }
 void CheckPosture::set_calibrateTrue() { calibrate = true; calibrated = false; }
-bool CheckPosture::postureCalibrated() { return calibrated; }
+boolean CheckPosture::postureCalibrated() { return calibrated; }
 
-void CheckPosture::checkFrame(cv::Mat &frame)
+void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximityThreshold, int angleThreshold)
 {
     // Convert opencv image to dlib image
     dlib::array2d<dlib::bgr_pixel> dlib_image;
@@ -48,6 +48,11 @@ void CheckPosture::checkFrame(cv::Mat &frame)
             calibrated = true;
 
             calibrate = false;
+        }
+
+        // If calibrated, compare current posture with the calibrated one
+        if (calibrated) {
+            checkPosture(heightThreshold, proximityThreshold, angleThreshold);
         }
     }
 }

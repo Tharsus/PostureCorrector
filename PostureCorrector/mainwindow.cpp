@@ -179,7 +179,7 @@ void MainWindow::update_window()
 {
     cap >> frame;
 
-    checkPosture.checkFrame(frame);
+    checkPosture.checkFrame(frame, ui->heightThreshold->value(), ui->proximityThreshold->value(), ui->rotationThreshold->value());
 
     if (calibrate && checkPosture.postureCalibrated()) {
         ui->checkBox->setChecked(true);
@@ -189,9 +189,6 @@ void MainWindow::update_window()
         calibrated=true;
     }
 
-    if (calibrated) {
-        checkPosture.checkPosture(ui->heightThreshold->value(), ui->proximityThreshold->value(), ui->rotationThreshold->value());
-    }
     show_frame(frame);
 }
 

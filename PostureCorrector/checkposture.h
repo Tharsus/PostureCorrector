@@ -31,9 +31,9 @@ public:
     void set_posture(std::vector<double>);
     void set_calibratedPosture(std::vector<double>);
     void set_calibrateTrue();
-    bool postureCalibrated();
+    boolean postureCalibrated();
 
-    void checkFrame(cv::Mat &);
+    void checkFrame(cv::Mat &, int heightThreshold, int proximityThreshold, int angleThreshold);
 
     int checkPosture(int, int, int);
 
