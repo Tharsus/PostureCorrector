@@ -15,6 +15,11 @@ CheckPosture::~CheckPosture() {}
 void CheckPosture::set_posture(std::vector<double> receivedPosture) { currentPosture = receivedPosture; }
 void CheckPosture::set_calibratedPosture(std::vector<double> receivedPosture) { calibratedPosture = receivedPosture; }
 
+void CheckPosture::calibratePosture()
+{
+    calibrate = true; calibrated = false;
+}
+
 void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximityThreshold, int angleThreshold)
 {
     // Convert opencv image to dlib image
@@ -46,7 +51,6 @@ void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximity
             set_calibratedPosture(currentPosture);
             calibratedLandmarks = faceLandmarks;
             calibrated = true;
-
             calibrate = false;
 
             emit postureCalibrated();
@@ -57,11 +61,6 @@ void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximity
             checkPosture(heightThreshold, proximityThreshold, angleThreshold);
         }
     }
-}
-
-void CheckPosture::calibratePosture()
-{
-    calibrate = true; calibrated = false;
 }
 
 std::vector<double> CheckPosture::checkFacePosition(cv::Mat frame, dlib::full_object_detection current_pose)
@@ -150,7 +149,7 @@ int CheckPosture::checkPosture(int heightThreshold, int proximityThreshold, int 
         if (currentPosture[2] < calibratedPosture[2] - proximityThreshold) { result = TOO_CLOSE; }
 
         // Incorrect posture due to the rotation to the right
-        else if (currentPosture[5] < calibratedPosture[5] - angleThreshold) { result = ROLL_RIGHT; }
+        if (currentPosture[5] < calibratedPosture[5] - angleThreshold) { result = ROLL_RIGHT; }
 
         // Incorrect posture due to the rotation to the left
         if (currentPosture[5] > calibratedPosture[5] + angleThreshold) { result = ROLL_LEFT; }
@@ -161,7 +160,7 @@ int CheckPosture::checkPosture(int heightThreshold, int proximityThreshold, int 
      * PREPARE CLOCK TO COUNT. IF RESULT CHANGES, RESTART CLOCK
      * SET QCONNECT WITH THIS CLOCK, IF EMIT TIMEOUT, EMIT NOTIFICATION
      *
-     * */
+     */
 
     emit postureStatus(result);
 

@@ -46,7 +46,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     if (db.openDatabase()) {
-        qDebug() << "opened";
+        qDebug() << "Database PostureStatus opened";
         std::vector<unsigned int> status;
         std::vector<QDateTime> dateTime;
 
@@ -81,9 +81,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+    if (numberOfCalibrations>0) {
+        db.insertIntoDatabase(END);
+    }
 
-    // include end and pause of software
+    delete ui;
 }
 
 void MainWindow::on_pushButton_Start_clicked()
@@ -131,6 +133,8 @@ void MainWindow::checkPosture_calibrated()
     if (numberOfCalibrations == 1) {
         ui->checkBox->setChecked(true);
         ui->pushButton_Calibrate->setText("Recalibrate");
+
+        db.insertIntoDatabase(START);
     }
     ui->pushButton_Calibrate->setEnabled(true);
 }

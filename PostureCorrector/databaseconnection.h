@@ -22,6 +22,8 @@ public:
     bool insertIntoDatabase(int);
     bool selectAllFromDatabase(std::vector<unsigned int> &, std::vector<QDateTime> &);
 
+    bool fillStatisticVariables();
+
 private:
     QSqlDatabase db;
     int lastID;
