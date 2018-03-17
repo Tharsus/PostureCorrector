@@ -150,6 +150,9 @@ void MainWindow::update_window()
 
     checkPosture.checkFrame(frame, ui->heightThreshold->value(), ui->proximityThreshold->value(), ui->rotationThreshold->value());
 
+    // Flip horizontally so that image is shown like a mirror
+    cv::flip(frame, frame, +1);
+
     show_frame(frame);
 }
 
