@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setIcon(QIcon(":/myappico.png"));
 
-    QObject::connect(&checkPosture, SIGNAL(badPosture(int)), this, SLOT(notify(int)));
+    QObject::connect(&checkPosture, SIGNAL(postureStatus(int)), this, SLOT(processPosture(int)));
 
     // Rotation
     ui->rotationThreshold->setValue(20);
@@ -50,8 +50,8 @@ MainWindow::MainWindow(QWidget *parent) :
         db.selectAllFromDatabase(status, dateTime);
 
         set_postureRecords(status, dateTime);
-        qDebug() << numberOfAlerts;
-        qDebug() << durationOfAlert;
+        qDebug() << "Number of Alerts: " << numberOfAlerts;
+        qDebug() << "Duration of alert: " << durationOfAlert;
 
 
         qDebug() << "end of reading";
@@ -60,68 +60,20 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-
-
-
     /*
-     * TESTING HOW TO PLOT A BARCHART
+     * Initialize Charts
      */
 
-    QtCharts::QBarSet *set0 = new QtCharts::QBarSet("Number of Ocurrencies");
-    *set0 << 50 << 65 << 45 << 30 << 15 << 7;
+    chronometer.start();
+    previousPosture=0;
+    for (int i=0; i<5; i++) {
+        timeInEachState[i]=0;
+        if (i<4) {
+            numberOfAlarmsForEachState[i]=0;
+        }
+    }
 
-    QtCharts::QBarSeries *barSeries = new QtCharts::QBarSeries();
-    barSeries->append(set0);
-
-    QtCharts::QChart *barChart = new QtCharts::QChart();
-    barChart->addSeries(barSeries);
-    barChart->setTitle("Simple barchart example");
-    barChart->setAnimationOptions(QtCharts::QChart::SeriesAnimations);
-
-    QStringList categories;
-    categories << "Jan" << "Feb" << "Mar" << "Apr" << "May" << "Jun";
-    QtCharts::QBarCategoryAxis *axis = new QtCharts::QBarCategoryAxis();
-    axis->append(categories);
-    barChart->createDefaultAxes();
-    barChart->setAxisX(axis, barSeries);
-
-    barChart->legend()->setVisible(true);
-    barChart->legend()->setAlignment(Qt::AlignBottom);
-
-    QtCharts::QChartView *barChartView = new QtCharts::QChartView(barChart);
-    barChartView->setRenderHint(QPainter::Antialiasing);
-
-
-    ui->chart_1->addWidget(barChartView);
-
-
-    /*
-     * TESTING HOW TO PLOT A PIECHART
-     */
-
-    QtCharts::QPieSeries *pieSeries = new QtCharts::QPieSeries();
-    pieSeries->append("Ok", 1);
-    pieSeries->append("Left", 2);
-    pieSeries->append("Right", 3);
-    pieSeries->append("Close", 4);
-    pieSeries->append("Down", 5);
-
-    QtCharts::QPieSlice *slice = pieSeries->slices().at(1);
-    slice->setExploded();
-    slice->setLabelVisible();
-    slice->setPen(QPen(Qt::darkGreen, 2));
-    slice->setBrush(Qt::green);
-
-    QtCharts::QChart *pieChart = new QtCharts::QChart();
-    pieChart->addSeries(pieSeries);
-    pieChart->setTitle("Simple piechart example");
-    pieChart->legend()->hide();
-
-    QtCharts::QChartView *pieChartView = new QtCharts::QChartView(pieChart);
-    pieChartView->setRenderHint(QPainter::Antialiasing);
-
-    ui->chart_2->addWidget(pieChartView);
-
+    initializeCharts();
 }
 
 MainWindow::~MainWindow()
@@ -231,40 +183,74 @@ void MainWindow::tray_notification(boolean activate, QString message)
     }
 }
 
-void MainWindow::notify(int postureCheck)
+void MainWindow::processPosture(int currentPosture)
 {
-    qDebug() << "Status: " << postureCheck;
+    //remove
+    if (previousPosture != currentPosture) {
+        int index=0;
+        if (previousPosture == LOW_HEIGHT) {
+            index=1;
+        }
+        else if (previousPosture == TOO_CLOSE) {
+            index=2;
+        }
+        else if (previousPosture == ROLL_RIGHT) {
+            index=3;
+        }
+        else if (previousPosture == ROLL_LEFT) {
+            index=4;
+        }
+        qDebug() << index;
+
+        timeInEachState[index] += chronometer.elapsed();
+        chronometer.restart();
+        previousPosture = currentPosture;
+    }
+
+    for (int i=0; i<5; i++) {
+        qDebug() << "Status " << i << " = " << timeInEachState[i]/1000;
+    }
+    qDebug() << endl;
+
+
+
+
+
+
+
+
+    //qDebug() << "Status: " << postureCheck;
     if (right_pose) {
         // Roll left
-        if (postureCheck == LOW_HEIGHT) {
+        if (currentPosture == LOW_HEIGHT) {
             right_pose = false;
             //sound_alert();
             tray_notification(true, "Too low!");
-            if (!db.insertIntoDatabase(postureCheck)) {}
+            if (!db.insertIntoDatabase(currentPosture)) {}
         }
         // Roll right
-        else if (postureCheck == TOO_CLOSE) {
+        else if (currentPosture == TOO_CLOSE) {
             right_pose = false;
             tray_notification(true, "Too close!");
-            if (!db.insertIntoDatabase(postureCheck)) {}
+            if (!db.insertIntoDatabase(currentPosture)) {}
         }
         // low height
-        else if (postureCheck == ROLL_RIGHT) {
+        else if (currentPosture == ROLL_RIGHT) {
             right_pose = false;
             tray_notification(true, "Rolling to the right!");
-            if (!db.insertIntoDatabase(postureCheck)) {}
+            if (!db.insertIntoDatabase(currentPosture)) {}
         }
         // too close
-        else if (postureCheck == ROLL_LEFT) {
+        else if (currentPosture == ROLL_LEFT) {
             right_pose = false;
             tray_notification(true, "Rolling to the left!");
-            if (!db.insertIntoDatabase(postureCheck)) {}
+            if (!db.insertIntoDatabase(currentPosture)) {}
         }
     } else {
-        if (postureCheck == CORRECT_POSTURE) {
+        if (currentPosture == CORRECT_POSTURE) {
             right_pose = true;
             tray_notification(false, "");
-            if (!db.insertIntoDatabase(postureCheck)) {}
+            if (!db.insertIntoDatabase(currentPosture)) {}
         }
     }
 }
@@ -300,4 +286,61 @@ void MainWindow::set_postureRecords(std::vector<unsigned int> status, std::vecto
             durationOfAlert.at(4) = dateTime.at(i-1).secsTo(dateTime.at(i));
         }
     }
+}
+
+void MainWindow::initializeCharts()
+{
+    // Bar Chart
+    set0 = new QtCharts::QBarSet("Number of Ocurrencies");
+    *set0 << 50 << 65 << 45 << 30 << 15 << 7;
+
+    QtCharts::QBarSeries *barSeries = new QtCharts::QBarSeries();
+    barSeries->append(set0);
+
+    QtCharts::QChart *barChart = new QtCharts::QChart();
+    barChart->addSeries(barSeries);
+    barChart->setTitle("Simple barchart example");
+    barChart->setAnimationOptions(QtCharts::QChart::SeriesAnimations);
+
+    QStringList categories;
+    categories << "Jan" << "Feb" << "Mar" << "Apr" << "May" << "Jun";
+    axis = new QtCharts::QBarCategoryAxis();
+    axis->append(categories);
+    barChart->createDefaultAxes();
+    barChart->setAxisX(axis, barSeries);
+
+    barChart->legend()->setVisible(true);
+    barChart->legend()->setAlignment(Qt::AlignBottom);
+
+    QtCharts::QChartView *barChartView = new QtCharts::QChartView(barChart);
+    barChartView->setRenderHint(QPainter::Antialiasing);
+
+
+    ui->chart_1->addWidget(barChartView);
+
+
+    // Pie Chart
+    pieSeries = new QtCharts::QPieSeries();
+    pieSeries->append("Correct", 5);
+    pieSeries->append("Left rotation", 1);
+    pieSeries->append("Right rotation", 2);
+    pieSeries->append("Proximity", 1);
+    pieSeries->append("Height", 2);
+
+    /*for (int i=0; i<5;i++) {
+        QtCharts::QPieSlice *slice = pieSeries->slices().at(i);
+        slice->setExploded();
+        slice->setLabelVisible();
+    }*/
+
+    QtCharts::QChart *pieChart = new QtCharts::QChart();
+    pieChart->addSeries(pieSeries);
+    //pieChart->setTitle("Time division between each states");
+    //pieChart->legend()->hide();
+    pieChart->legend()->setAlignment(Qt::AlignRight);
+
+    QtCharts::QChartView *pieChartView = new QtCharts::QChartView(pieChart);
+    pieChartView->setRenderHint(QPainter::Antialiasing);
+
+    ui->chart_2->addWidget(pieChartView);
 }

@@ -58,8 +58,7 @@ private slots:
 
     void on_proximityThreshold_valueChanged(int value);
 
-//public slots:
-    void notify(int);
+    void processPosture(int);
 
 private:
     Ui::MainWindow *ui;
@@ -93,6 +92,25 @@ private:
 
     int numberOfAlerts;
     std::vector<qint64> durationOfAlert;
+
+
+    // Variables from statistics
+    int previousPosture;
+    QTime chronometer;
+    int timeInEachState[5];
+    int numberOfAlarmsForEachState[4];
+    // Check previous and timeInEachState initialization
+
+
+    // Bar Chart Variables
+    QtCharts::QBarSet *set0;
+    QtCharts::QBarCategoryAxis *axis;
+
+    // Pie Chart Variables
+    QtCharts::QPieSeries *pieSeries;
+
+
+    void initializeCharts(void);
 };
 
 #endif // MAINWINDOW_H

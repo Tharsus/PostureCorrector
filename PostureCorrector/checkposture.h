@@ -28,23 +28,24 @@ class CheckPosture : public QObject
 public:
     CheckPosture();
 
-    void set_posture(std::vector<double>);
-    void set_calibratedPosture(std::vector<double>);
-    void set_calibrateTrue();
-    boolean postureCalibrated();
+    void set_calibrateTrue(void);
+    boolean postureCalibrated(void);
 
     void checkFrame(cv::Mat &, int heightThreshold, int proximityThreshold, int angleThreshold);
 
-    int checkPosture(int, int, int);
-
 signals:
-    void badPosture(int);
+    void postureStatus(int);
 
 private:
     dlib::frontal_face_detector detector;
     dlib::shape_predictor shape_predictor;
 
+    void set_posture(std::vector<double>);
+    void set_calibratedPosture(std::vector<double>);
+
     std::vector<double> checkFacePosition(cv::Mat, dlib::full_object_detection);
+
+    int checkPosture(int, int, int);
 
     unsigned int numberOfFaces;
     std::vector<double> currentPosture;

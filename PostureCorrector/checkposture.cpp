@@ -156,7 +156,7 @@ int CheckPosture::checkPosture(int heightThreshold, int proximityThreshold, int 
      *
      * */
 
-    emit badPosture(result);
+    emit postureStatus(result);
 
     return result;
 }
