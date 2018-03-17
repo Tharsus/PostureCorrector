@@ -60,6 +60,11 @@ private slots:
 
     void processPosture(int);
 
+    void checkPosture_calibrated(void);
+
+signals:
+    void calibrateButton_clicked(void);
+
 private:
     Ui::MainWindow *ui;
 
@@ -69,10 +74,7 @@ private:
     cv::Mat frame;
     QImage qt_image;
 
-    boolean calibrate;
-    boolean calibrated;
-    dlib::full_object_detection calibrated_pose;
-    std::vector<double> calibrated_facePosition;
+    unsigned int numberOfCalibrations;
 
     boolean right_pose;
 

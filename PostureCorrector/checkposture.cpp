@@ -10,10 +10,10 @@ CheckPosture::CheckPosture() {
     state = 0;
 }
 
+CheckPosture::~CheckPosture() {}
+
 void CheckPosture::set_posture(std::vector<double> receivedPosture) { currentPosture = receivedPosture; }
 void CheckPosture::set_calibratedPosture(std::vector<double> receivedPosture) { calibratedPosture = receivedPosture; }
-void CheckPosture::set_calibrateTrue() { calibrate = true; calibrated = false; }
-boolean CheckPosture::postureCalibrated() { return calibrated; }
 
 void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximityThreshold, int angleThreshold)
 {
@@ -48,6 +48,8 @@ void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximity
             calibrated = true;
 
             calibrate = false;
+
+            emit postureCalibrated();
         }
 
         // If calibrated, compare current posture with the calibrated one
@@ -55,6 +57,11 @@ void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximity
             checkPosture(heightThreshold, proximityThreshold, angleThreshold);
         }
     }
+}
+
+void CheckPosture::calibratePosture()
+{
+    calibrate = true; calibrated = false;
 }
 
 std::vector<double> CheckPosture::checkFacePosition(cv::Mat frame, dlib::full_object_detection current_pose)

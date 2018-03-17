@@ -16,8 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pushButton_Stop->setEnabled(false);
     ui->pushButton_Calibrate->setEnabled(false);
 
-    calibrate = false;
-    calibrated = false;
+    numberOfCalibrations = 0;
 
     right_pose = true;
 
@@ -27,7 +26,11 @@ MainWindow::MainWindow(QWidget *parent) :
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setIcon(QIcon(":/myappico.png"));
 
+    QObject::connect(this, SIGNAL(calibrateButton_clicked(void)), &checkPosture, SLOT(calibratePosture()));
+    QObject::connect(&checkPosture, SIGNAL(postureCalibrated()), this, SLOT(checkPosture_calibrated(void)));
+
     QObject::connect(&checkPosture, SIGNAL(postureStatus(int)), this, SLOT(processPosture(int)));
+
 
     // Rotation
     ui->rotationThreshold->setValue(20);
@@ -117,9 +120,19 @@ void MainWindow::on_pushButton_Stop_clicked()
 
 void MainWindow::on_pushButton_Calibrate_clicked()
 {
-    calibrate = true;
     ui->pushButton_Calibrate->setEnabled(false);
-    checkPosture.set_calibrateTrue();
+
+    emit calibrateButton_clicked();
+}
+
+void MainWindow::checkPosture_calibrated()
+{
+    numberOfCalibrations += 1;
+    if (numberOfCalibrations == 1) {
+        ui->checkBox->setChecked(true);
+        ui->pushButton_Calibrate->setText("Recalibrate");
+    }
+    ui->pushButton_Calibrate->setEnabled(true);
 }
 
 void MainWindow::on_rotationThreshold_valueChanged(int value) { ui->rotationDisplay->setValue(value); }
@@ -133,20 +146,12 @@ void MainWindow::update_window()
 
     checkPosture.checkFrame(frame, ui->heightThreshold->value(), ui->proximityThreshold->value(), ui->rotationThreshold->value());
 
-    if (calibrate && checkPosture.postureCalibrated()) {
-        ui->checkBox->setChecked(true);
-        ui->pushButton_Calibrate->setText("Recalibrate");
-        ui->pushButton_Calibrate->setEnabled(true);
-        calibrate=false;
-        calibrated=true;
-    }
-
     show_frame(frame);
 }
 
 void MainWindow::show_frame(cv::Mat &image)
 {
-    //resize image to the size of label_displayFace
+    // Resize image to the size of label_displayFace
     cv::Mat resized_image = image.clone();
 
     int width_of_label = ui->label_displayFace->width();
@@ -155,7 +160,7 @@ void MainWindow::show_frame(cv::Mat &image)
     cv::Size size(width_of_label, height_of_label);
     cv::resize(image, resized_image, size);
 
-    //change color map so that it can be displayed in label_displayFace
+    // Change color map so that it can be displayed in label_displayFace
     cvtColor(resized_image, resized_image, CV_BGR2RGB);
     ui->label_displayFace->setPixmap(QPixmap::fromImage(QImage(resized_image.data, resized_image.cols, resized_image.rows, QImage::Format_RGB888)));
 }

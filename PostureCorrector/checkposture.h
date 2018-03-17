@@ -27,13 +27,15 @@ class CheckPosture : public QObject
 
 public:
     CheckPosture();
-
-    void set_calibrateTrue(void);
-    boolean postureCalibrated(void);
+    ~CheckPosture();
 
     void checkFrame(cv::Mat &, int heightThreshold, int proximityThreshold, int angleThreshold);
 
+public slots:
+    void calibratePosture();
+
 signals:
+    void postureCalibrated();
     void postureStatus(int);
 
 private:
