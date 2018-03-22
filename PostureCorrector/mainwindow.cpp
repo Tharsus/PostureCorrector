@@ -10,6 +10,16 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    ui->tabWidget->hide();
+
+    // Present loading animation
+    QMovie *movie = new QMovie("C://Users//Thársus//Desktop//ajax-loader.gif");
+    ui->loading->setMovie(movie);
+    ui->loading->setAlignment(Qt::AlignCenter);
+    movie->start();
+
+
+    // Prepare variables
     timer = new QTimer(this);
 
     ui->pushButton_Start->setEnabled(true);
@@ -19,6 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
     numberOfCalibrations = 0;
 
     right_pose = true;
+    pause=false;
 
     alertsound = new QMediaPlayer();
     alertsound->setMedia(QUrl("C://Windows//media//Windows Notify System Generic.wav"));
@@ -47,7 +58,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     if (db.openDatabase()) {
         qDebug() << "Database PostureStatus opened";
-        std::vector<unsigned int> status;
+
+        db.fillChartVariables();
+
+        /*std::vector<unsigned int> status;
         std::vector<QDateTime> dateTime;
 
         db.selectAllFromDatabase(status, dateTime);
@@ -57,8 +71,13 @@ MainWindow::MainWindow(QWidget *parent) :
         qDebug() << "Duration of alert: " << durationOfAlert;
 
 
-        qDebug() << "end of reading";
+        qDebug() << "end of reading";*/
     } else { qDebug() << "error"; }
+
+
+
+
+
 
 
 
@@ -77,6 +96,14 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     initializeCharts();
+
+
+
+
+
+    // hide loading widget and show tabWIdget
+    ui->loading->hide();
+    ui->tabWidget->show();
 }
 
 MainWindow::~MainWindow()
@@ -110,6 +137,13 @@ void MainWindow::on_pushButton_Stop_clicked()
     ui->pushButton_Start->setEnabled(true);
     ui->pushButton_Stop->setEnabled(false);
     ui->pushButton_Calibrate->setEnabled(false);
+
+    if (numberOfCalibrations > 0) {
+        db.insertIntoDatabase(PAUSE);
+        tray_notification(false, "");
+        right_pose=true;
+        pause = true;
+    }
 
     disconnect(timer, SIGNAL(timeout()),this, SLOT(update_window()));
     cap.release();
@@ -150,7 +184,7 @@ void MainWindow::update_window()
 
     checkPosture.checkFrame(frame, ui->heightThreshold->value(), ui->proximityThreshold->value(), ui->rotationThreshold->value());
 
-    // Flip horizontally so that image is shown like a mirror
+    // Flip horizontally so that image shown feels like watching yourself in a mirror
     cv::flip(frame, frame, +1);
 
     show_frame(frame);
@@ -230,12 +264,19 @@ void MainWindow::processPosture(int currentPosture)
 
 
 
+    /*
+     *
+     * REDESIGN
+     * emit signal to db insert on database
+     *
+     */
 
     //qDebug() << "Status: " << postureCheck;
-    if (right_pose) {
+    if (right_pose || pause) {
         // Roll left
         if (currentPosture == LOW_HEIGHT) {
             right_pose = false;
+            pause = false;
             //sound_alert();
             tray_notification(true, "Too low!");
             if (!db.insertIntoDatabase(currentPosture)) {}
@@ -243,24 +284,33 @@ void MainWindow::processPosture(int currentPosture)
         // Roll right
         else if (currentPosture == TOO_CLOSE) {
             right_pose = false;
+            pause = false;
             tray_notification(true, "Too close!");
             if (!db.insertIntoDatabase(currentPosture)) {}
         }
         // low height
         else if (currentPosture == ROLL_RIGHT) {
             right_pose = false;
+            pause = false;
             tray_notification(true, "Rolling to the right!");
             if (!db.insertIntoDatabase(currentPosture)) {}
         }
         // too close
         else if (currentPosture == ROLL_LEFT) {
             right_pose = false;
+            pause = false;
             tray_notification(true, "Rolling to the left!");
             if (!db.insertIntoDatabase(currentPosture)) {}
         }
-    } else {
+
+        if (pause) {
+            pause = false;
+            if (!db.insertIntoDatabase(currentPosture)) {}
+        }
+    } else if (!right_pose) {
         if (currentPosture == CORRECT_POSTURE) {
             right_pose = true;
+            pause = false;
             tray_notification(false, "");
             if (!db.insertIntoDatabase(currentPosture)) {}
         }

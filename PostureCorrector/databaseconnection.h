@@ -12,6 +12,10 @@
 
 #include <vector>
 
+#include <QDebug>
+
+#include "list_of_states.h"
+
 class DatabaseConnection
 {
 public:
@@ -22,7 +26,7 @@ public:
     bool insertIntoDatabase(int);
     bool selectAllFromDatabase(std::vector<unsigned int> &, std::vector<QDateTime> &);
 
-    bool fillStatisticVariables();
+    bool fillChartVariables();
 
 private:
     QSqlDatabase db;

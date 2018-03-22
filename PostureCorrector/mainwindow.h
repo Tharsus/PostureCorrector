@@ -77,6 +77,7 @@ private:
     unsigned int numberOfCalibrations;
 
     boolean right_pose;
+    boolean pause;
 
     QMediaPlayer *alertsound;
     QSystemTrayIcon *trayIcon;
