@@ -59,7 +59,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if (db.openDatabase()) {
         qDebug() << "Database PostureStatus opened";
 
-        db.fillChartVariables();
+        db.fillChartVariables(days, alertsInEachState, durationInEachState);
 
         /*std::vector<unsigned int> status;
         std::vector<QDateTime> dateTime;
@@ -353,19 +353,33 @@ void MainWindow::set_postureRecords(std::vector<unsigned int> status, std::vecto
 void MainWindow::initializeCharts()
 {
     // Bar Chart
-    set0 = new QtCharts::QBarSet("Number of Ocurrencies");
-    *set0 << 50 << 65 << 45 << 30 << 15 << 7;
+    set0 = new QtCharts::QBarSet("Low Height");
+    set1 = new QtCharts::QBarSet("Too Close");
+    set2 = new QtCharts::QBarSet("Rolling Right");
+    set3 = new QtCharts::QBarSet("Rolling Left");
+    for (unsigned i=0; i<alertsInEachState.size(); i++) {
+        *set0 << alertsInEachState[i][0];
+        *set1 << alertsInEachState[i][1];
+        *set2 << alertsInEachState[i][2];
+        *set3 << alertsInEachState[i][3];
+    }
 
     QtCharts::QBarSeries *barSeries = new QtCharts::QBarSeries();
     barSeries->append(set0);
+    barSeries->append(set1);
+    barSeries->append(set2);
+    barSeries->append(set3);
 
     QtCharts::QChart *barChart = new QtCharts::QChart();
     barChart->addSeries(barSeries);
-    barChart->setTitle("Simple barchart example");
+    barChart->setTitle("Number of Ocurrencies");
     barChart->setAnimationOptions(QtCharts::QChart::SeriesAnimations);
 
     QStringList categories;
-    categories << "Jan" << "Feb" << "Mar" << "Apr" << "May" << "Jun";
+    for (unsigned i=0; i<days.size(); i++) {
+        QString day_month = QString::number(days[i].day()) + "/" + QString::number(days[i].month());
+        categories << day_month;
+    }
     axis = new QtCharts::QBarCategoryAxis();
     axis->append(categories);
     barChart->createDefaultAxes();
@@ -383,11 +397,18 @@ void MainWindow::initializeCharts()
 
     // Pie Chart
     pieSeries = new QtCharts::QPieSeries();
-    pieSeries->append("Correct", 5);
-    pieSeries->append("Left rotation", 1);
-    pieSeries->append("Right rotation", 2);
-    pieSeries->append("Proximity", 1);
-    pieSeries->append("Height", 2);
+
+    int duration[5] = {0};
+    for (unsigned i=0; i<durationInEachState.size(); i++) {
+        for (unsigned j=0; j<5; j++) {
+            duration[j] += durationInEachState[i][j];
+        }
+    }
+    pieSeries->append("Correct", duration[0]);
+    pieSeries->append("Low Height", duration[1]);
+    pieSeries->append("Too Close", duration[2]);
+    pieSeries->append("Rolling Right", duration[3]);
+    pieSeries->append("Rolling Left", duration[4]);
 
     /*for (int i=0; i<5;i++) {
         QtCharts::QPieSlice *slice = pieSeries->slices().at(i);

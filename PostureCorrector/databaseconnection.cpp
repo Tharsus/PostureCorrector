@@ -79,19 +79,19 @@ bool DatabaseConnection::selectAllFromDatabase(std::vector<unsigned int> &status
     return true;
 }
 
-bool DatabaseConnection::fillChartVariables()
+bool DatabaseConnection::fillChartVariables(std::vector<QDate> &days, std::vector< std::vector<int> > &alertsInEachState, std::vector< std::vector<int> > &durationInEachState)
 {
     // Statistics variables
-    std::vector<QDate> days;
+    /*std::vector<QDate> days;
     std::vector< std::vector<int> > alertsInEachState;
-    std::vector< std::vector<int> > durationInEachState;
+    std::vector< std::vector<int> > durationInEachState;*/
 
     // Auxiliar variables for computing statistics
     int state[2];
     QDateTime dateTime[2];
     // Initialize vector with [0, 0, 0, 0, 0]
     std::vector<int> timeInEachState(5, 0);
-    std::vector<int> alerts(5, 0);
+    std::vector<int> alerts(4, 0);
 
     // Auxiliar variables for looping through database
     int index = 1;
@@ -160,30 +160,34 @@ bool DatabaseConnection::fillChartVariables()
 
                 for (unsigned i=0; i<5; i++) {
                     timeInEachState.at(i)=0;
+                }
+                for (unsigned i=0; i<4; i++) {
                     alerts.at(i)=0;
                 }
             }
 
 
             // Update statistics of each state
-            if (state[0]==CORRECT_POSTURE || state[0]==START) {
-                timeInEachState.at(0) += (dateTime[1].toMSecsSinceEpoch()-dateTime[0].toMSecsSinceEpoch());
-            }
-            else if (state[0]==LOW_HEIGHT) {
-                timeInEachState.at(1) += (dateTime[1].toMSecsSinceEpoch()-dateTime[0].toMSecsSinceEpoch());
-                alerts.at(1) += 1;
-            }
-            else if (state[0]==TOO_CLOSE) {
-                timeInEachState.at(2) += (dateTime[1].toMSecsSinceEpoch()-dateTime[0].toMSecsSinceEpoch());
-                alerts.at(2) += 1;
-            }
-            else if (state[0]==ROLL_RIGHT) {
-                timeInEachState.at(3) += (dateTime[1].toMSecsSinceEpoch()-dateTime[0].toMSecsSinceEpoch());
-                alerts.at(3) += 1;
-            }
-            else if (state[0]==ROLL_LEFT) {
-                timeInEachState.at(4) += (dateTime[1].toMSecsSinceEpoch()-dateTime[0].toMSecsSinceEpoch());
-                alerts.at(4) += 1;
+            if (state[1] != START) {
+                if (state[0]==CORRECT_POSTURE || state[0]==START) {
+                    timeInEachState.at(0) += (dateTime[1].toMSecsSinceEpoch()-dateTime[0].toMSecsSinceEpoch());
+                }
+                else if (state[0]==LOW_HEIGHT) {
+                    timeInEachState.at(1) += (dateTime[1].toMSecsSinceEpoch()-dateTime[0].toMSecsSinceEpoch());
+                    alerts.at(0) += 1;
+                }
+                else if (state[0]==TOO_CLOSE) {
+                    timeInEachState.at(2) += (dateTime[1].toMSecsSinceEpoch()-dateTime[0].toMSecsSinceEpoch());
+                    alerts.at(1) += 1;
+                }
+                else if (state[0]==ROLL_RIGHT) {
+                    timeInEachState.at(3) += (dateTime[1].toMSecsSinceEpoch()-dateTime[0].toMSecsSinceEpoch());
+                    alerts.at(2) += 1;
+                }
+                else if (state[0]==ROLL_LEFT) {
+                    timeInEachState.at(4) += (dateTime[1].toMSecsSinceEpoch()-dateTime[0].toMSecsSinceEpoch());
+                    alerts.at(3) += 1;
+                }
             }
 
         }
@@ -196,15 +200,15 @@ bool DatabaseConnection::fillChartVariables()
     durationInEachState.push_back(timeInEachState);
     alertsInEachState.push_back(alerts);
 
-    for (unsigned i=0; i<durationInEachState.size(); i++) {
+    /*for (unsigned i=0; i<durationInEachState.size(); i++) {
         qDebug() << endl << "indice: " << i;
         qDebug() << "Day: " << days[i];
         qDebug() << "0: " << durationInEachState[i][0];
-        qDebug() << "1: " << durationInEachState[i][1] << " number: " << alertsInEachState[i][1];
-        qDebug() << "2: " << durationInEachState[i][2] << " number: " << alertsInEachState[i][2];
-        qDebug() << "3: " << durationInEachState[i][3] << " number: " << alertsInEachState[i][3];
-        qDebug() << "4: " << durationInEachState[i][4] << " number: " << alertsInEachState[i][4];
-    }
+        qDebug() << "1: " << durationInEachState[i][1] << " number: " << alertsInEachState[i][0];
+        qDebug() << "2: " << durationInEachState[i][2] << " number: " << alertsInEachState[i][1];
+        qDebug() << "3: " << durationInEachState[i][3] << " number: " << alertsInEachState[i][2];
+        qDebug() << "4: " << durationInEachState[i][4] << " number: " << alertsInEachState[i][3];
+    }*/
 
     return true;
 }

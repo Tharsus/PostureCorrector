@@ -26,7 +26,7 @@ public:
     bool insertIntoDatabase(int);
     bool selectAllFromDatabase(std::vector<unsigned int> &, std::vector<QDateTime> &);
 
-    bool fillChartVariables();
+    bool fillChartVariables(std::vector<QDate> &, std::vector< std::vector<int> > &, std::vector< std::vector<int> > &);
 
 private:
     QSqlDatabase db;

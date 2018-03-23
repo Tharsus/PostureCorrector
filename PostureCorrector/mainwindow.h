@@ -91,6 +91,13 @@ private:
     void sound_alert();
     void tray_notification(boolean, QString);
 
+
+
+    std::vector<QDate> days;
+    std::vector< std::vector<int> > alertsInEachState;
+    std::vector< std::vector<int> > durationInEachState;
+
+
     void set_postureRecords(std::vector<unsigned int>, std::vector<QDateTime>);
 
     int numberOfAlerts;
@@ -107,6 +114,9 @@ private:
 
     // Bar Chart Variables
     QtCharts::QBarSet *set0;
+    QtCharts::QBarSet *set1;
+    QtCharts::QBarSet *set2;
+    QtCharts::QBarSet *set3;
     QtCharts::QBarCategoryAxis *axis;
 
     // Pie Chart Variables
