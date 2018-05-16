@@ -58,7 +58,7 @@ private slots:
 
     void on_proximityThreshold_valueChanged(int value);
 
-    void processPosture(int);
+    void processPosture(int, double, double, double);
 
     void checkPosture_calibrated(void);
 

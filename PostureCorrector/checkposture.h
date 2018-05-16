@@ -36,7 +36,7 @@ public slots:
 
 signals:
     void postureCalibrated();
-    void postureStatus(int);
+    void postureStatus(int, double, double, double);
 
 private:
     dlib::frontal_face_detector detector;

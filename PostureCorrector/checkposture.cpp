@@ -135,19 +135,38 @@ std::vector<double> CheckPosture::checkFacePosition(cv::Mat frame, dlib::full_ob
     return facePosition;
 }
 
+
+/*
+ * Proximidade
+ *
+ * Redução na altura
+ *
+ * Inclinação da face ??
+ * Sugestão: alteração da altura + alteração da posição horizontal (eixo x) + inclinação da face
+ *
+ *
+ *
+ */
 int CheckPosture::checkPosture(int heightThreshold, int proximityThreshold, int angleThreshold)
 {
     int result = CORRECT_POSTURE;
+    double heightTracker = 0;
+    double proximityTracker = 0;
+    double angleTracker = 0;
 
     if (numberOfFaces != 1) {
         result = COULD_NOT_DETECT;
     } else {
         // Incorrect posture due to the height
+        heightTracker = ( currentPosture[1]-calibratedPosture[1] ) / heightThreshold ;
         if (currentPosture[1] > calibratedPosture[1] + heightThreshold) { result = LOW_HEIGHT; }
 
         // Incorrect posture due to the proximity of the camera
+        proximityTracker = ( calibratedPosture[2]-currentPosture[2] ) / proximityThreshold ;
         if (currentPosture[2] < calibratedPosture[2] - proximityThreshold) { result = TOO_CLOSE; }
 
+        // Rotation
+        angleTracker = ( calibratedPosture[5]-currentPosture[5] ) / angleThreshold ;
         // Incorrect posture due to the rotation to the right
         if (currentPosture[5] < calibratedPosture[5] - angleThreshold) { result = ROLL_RIGHT; }
 
@@ -162,7 +181,7 @@ int CheckPosture::checkPosture(int heightThreshold, int proximityThreshold, int 
      *
      */
 
-    emit postureStatus(result);
+    emit postureStatus(result, heightTracker, proximityTracker, angleTracker);
 
     return result;
 }

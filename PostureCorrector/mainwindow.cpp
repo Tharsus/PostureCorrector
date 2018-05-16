@@ -26,6 +26,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pushButton_Stop->setEnabled(false);
     ui->pushButton_Calibrate->setEnabled(false);
 
+    ui->progressBar->hide();
+    ui->progressBar_2->hide();
+    ui->progressBar_3->hide();
+
     numberOfCalibrations = 0;
 
     right_pose = true;
@@ -40,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(this, SIGNAL(calibrateButton_clicked(void)), &checkPosture, SLOT(calibratePosture()));
     QObject::connect(&checkPosture, SIGNAL(postureCalibrated()), this, SLOT(checkPosture_calibrated(void)));
 
-    QObject::connect(&checkPosture, SIGNAL(postureStatus(int)), this, SLOT(processPosture(int)));
+    QObject::connect(&checkPosture, SIGNAL(postureStatus(int, double, double, double)), this, SLOT(processPosture(int, double, double, double)));
 
 
     // Rotation
@@ -167,6 +171,9 @@ void MainWindow::checkPosture_calibrated()
     if (numberOfCalibrations == 1) {
         ui->checkBox->setChecked(true);
         ui->pushButton_Calibrate->setText("Recalibrate");
+        ui->progressBar->show();
+        ui->progressBar_2->show();
+        ui->progressBar_3->show();
 
         db.insertIntoDatabase(START);
     }
@@ -229,7 +236,7 @@ void MainWindow::tray_notification(boolean activate, QString message)
     }
 }
 
-void MainWindow::processPosture(int currentPosture)
+void MainWindow::processPosture(int currentPosture, double heightTracker, double proximityTracker, double angleTracker)
 {
     //remove
     if (previousPosture != currentPosture) {
@@ -251,6 +258,26 @@ void MainWindow::processPosture(int currentPosture)
         timeInEachState[index] += chronometer.elapsed();
         chronometer.restart();
         previousPosture = currentPosture;
+    }
+
+    if (heightTracker < 0) { ui->progressBar->setValue(0); }
+    else if (heightTracker > 1) { ui->progressBar->setValue(100); }
+    else {
+        int ratio = trunc(heightTracker * 100);
+        ui->progressBar->setValue( ratio );
+    }
+
+    if (proximityTracker < 0) { ui->progressBar_2->setValue(0); }
+    else if (proximityTracker > 1) { ui->progressBar_2->setValue(100); }
+    else {
+        int ratio = trunc(proximityTracker * 100);
+        ui->progressBar_2->setValue( ratio );
+    }
+
+    int ratio = abs(trunc(angleTracker * 100));
+    if (ratio > 100) { ui->progressBar_3->setValue(100); }
+    else {
+        ui->progressBar_3->setValue( ratio );
     }
 
     for (int i=0; i<5; i++) {
