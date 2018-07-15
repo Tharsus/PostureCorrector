@@ -30,9 +30,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->proximityBar->hide();
     ui->rotationBar->hide();
 
-    ui->label_4->hide();
-    ui->label_5->hide();
-    ui->label_6->hide();
+    ui->rotationLabel2->hide();
+    ui->heightLabel2->hide();
+    ui->proximityLabel2->hide();
 
     numberOfCalibrations = 0;
 
@@ -141,9 +141,9 @@ void MainWindow::on_pushButton_Start_clicked()
             ui->proximityBar->setEnabled(true);
             ui->rotationBar->setEnabled(true);
 
-            ui->label_4->setEnabled(true);
-            ui->label_5->setEnabled(true);
-            ui->label_6->setEnabled(true);
+            ui->rotationLabel2->setEnabled(true);
+            ui->heightLabel2->setEnabled(true);
+            ui->proximityLabel2->setEnabled(true);
         }
 
         connect(timer, SIGNAL(timeout()), this, SLOT(update_window()));
@@ -165,9 +165,9 @@ void MainWindow::on_pushButton_Stop_clicked()
     ui->proximityBar->setEnabled(false);
     ui->rotationBar->setEnabled(false);
 
-    ui->label_4->setEnabled(false);
-    ui->label_5->setEnabled(false);
-    ui->label_6->setEnabled(false);
+    ui->rotationLabel2->setEnabled(false);
+    ui->heightLabel2->setEnabled(false);
+    ui->proximityLabel2->setEnabled(false);
 
     if (numberOfCalibrations > 0) {
         db.insertIntoDatabase(PAUSE);
@@ -202,9 +202,9 @@ void MainWindow::checkPosture_calibrated()
         ui->proximityBar->show();
         ui->rotationBar->show();
 
-        ui->label_4->show();
-        ui->label_5->show();
-        ui->label_6->show();
+        ui->rotationLabel2->show();
+        ui->heightLabel2->show();
+        ui->proximityLabel2->show();
 
         db.insertIntoDatabase(START);
     }
@@ -270,7 +270,7 @@ void MainWindow::tray_notification(boolean activate, QString message)
 void MainWindow::processPosture(int currentPosture, double heightTracker, double proximityTracker, double angleTracker)
 {
     //remove
-    if (previousPosture != currentPosture) {
+    if (previousPosture != currentPosture && currentPosture != COULD_NOT_DETECT) {
         int index=0;
         if (previousPosture == LOW_HEIGHT) {
             index=1;

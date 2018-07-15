@@ -75,6 +75,8 @@ void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximity
     else {
         if (calibrated) {
             checkStatus(COULD_NOT_DETECT);
+            emit postureStatus(COULD_NOT_DETECT, 0, 0, 0);
+
         }
     }
 }
@@ -188,6 +190,11 @@ int CheckPosture::checkPosture(int heightThreshold, int proximityThreshold, int 
 
         // Incorrect posture due to the rotation to the left
         if (currentPosture[5] > calibratedPosture[5] + angleThreshold) { result = ROLL_LEFT; }
+
+
+        // Consider distance between the calibrated posture and current posture?
+
+
 
         checkStatus(result);
     }
