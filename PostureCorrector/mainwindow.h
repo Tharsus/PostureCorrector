@@ -60,6 +60,8 @@ private slots:
 
     void processPosture(int, double, double, double);
 
+    void processState(int);
+
     void checkPosture_calibrated(void);
 
 signals:

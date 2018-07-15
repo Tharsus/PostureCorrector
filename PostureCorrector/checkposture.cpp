@@ -8,6 +8,9 @@ CheckPosture::CheckPosture() {
     calibrated = false;
 
     state = 0;
+    state_to_emit = 0;
+    state_chronometer = new QTimer(this);
+    counting = false;
 }
 
 CheckPosture::~CheckPosture() {}
@@ -20,6 +23,15 @@ void CheckPosture::calibratePosture()
     calibrate = true; calibrated = false;
 }
 
+void CheckPosture::emitState()
+{
+    state_chronometer->stop();
+    qDebug() << "To be emitted: " << state_to_emit;
+    emit postureState(state_to_emit);
+
+    state = state_to_emit;
+}
+
 void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximityThreshold, int angleThreshold)
 {
     // Convert opencv image to dlib image
@@ -29,7 +41,6 @@ void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximity
     // Detect faces
     std::vector<dlib::rectangle> detected_faces = detector(dlib_image);
     numberOfFaces = detected_faces.size();
-    //qDebug() << "Number of faces: " << detected_faces.size();
 
     if (numberOfFaces == 1) {
         // Get face landmarks
@@ -59,6 +70,11 @@ void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximity
         // If calibrated, compare current posture with the calibrated one
         if (calibrated) {
             checkPosture(heightThreshold, proximityThreshold, angleThreshold);
+        }
+    }
+    else {
+        if (calibrated) {
+            checkStatus(COULD_NOT_DETECT);
         }
     }
 }
@@ -172,18 +188,45 @@ int CheckPosture::checkPosture(int heightThreshold, int proximityThreshold, int 
 
         // Incorrect posture due to the rotation to the left
         if (currentPosture[5] > calibratedPosture[5] + angleThreshold) { result = ROLL_LEFT; }
+
+        checkStatus(result);
     }
-
-
-    /*
-     * PREPARE CLOCK TO COUNT. IF RESULT CHANGES, RESTART CLOCK
-     * SET QCONNECT WITH THIS CLOCK, IF EMIT TIMEOUT, EMIT NOTIFICATION
-     *
-     */
 
     emit postureStatus(result, heightTracker, proximityTracker, angleTracker);
 
     return result;
 }
 
+int CheckPosture::checkStatus(int current_state)
+{
+    if (not(counting)) {
+        if (state != current_state) {
+            if (state == COULD_NOT_DETECT) {
+                state_to_emit = current_state;
+                emitState();
+            }
+            else {
+                state_to_emit = current_state;
+                connect(state_chronometer, SIGNAL(timeout()), this, SLOT(emitState()));
+                state_chronometer->start(5000); //in miliseconds: 5000ms = 5s
+                counting = true;
+            }
+        }
+    } else {
+        if (state == current_state) {
+            state_chronometer->stop();
+            disconnect(state_chronometer, SIGNAL(timeout()), this, SLOT(emitState()));
+            counting = false;
+        }
+        else if (state_to_emit != CORRECT_POSTURE && state_to_emit != COULD_NOT_DETECT && current_state != CORRECT_POSTURE && current_state != COULD_NOT_DETECT) {
+            state_to_emit = current_state;
+        }
+        else if (state_to_emit != current_state) {
+            state_to_emit = current_state;
+            state_chronometer->stop();
+            state_chronometer->start(5000);
+        }
+    }
 
+    return 0;
+}

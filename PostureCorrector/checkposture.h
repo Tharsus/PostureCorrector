@@ -19,6 +19,8 @@
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_processing/render_face_detections.h>
 
+#include <QTimer>
+
 #include "list_of_states.h"
 
 class CheckPosture : public QObject
@@ -33,10 +35,12 @@ public:
 
 public slots:
     void calibratePosture();
+    void emitState();
 
 signals:
     void postureCalibrated();
     void postureStatus(int, double, double, double);
+    void postureState(int);
 
 private:
     dlib::frontal_face_detector detector;
@@ -48,6 +52,7 @@ private:
     std::vector<double> checkFacePosition(cv::Mat, dlib::full_object_detection);
 
     int checkPosture(int, int, int);
+    int checkStatus(int);
 
     unsigned int numberOfFaces;
     std::vector<double> currentPosture;
@@ -57,8 +62,11 @@ private:
     boolean calibrate;
     boolean calibrated;
 
-    unsigned int state;
-    unsigned int current_state;
+    // Variables to track the state of user
+    int state;
+    int state_to_emit;
+    QTimer *state_chronometer;
+    boolean counting;
 };
 
 #endif // CHECKPOSTURE_H

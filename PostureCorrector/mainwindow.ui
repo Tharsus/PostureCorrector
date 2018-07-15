@@ -403,7 +403,7 @@
        <set>Qt::AlignCenter</set>
       </property>
      </widget>
-     <widget class="QProgressBar" name="progressBar">
+     <widget class="QProgressBar" name="rotationBar">
       <property name="geometry">
        <rect>
         <x>750</x>
@@ -416,7 +416,7 @@
        <number>0</number>
       </property>
      </widget>
-     <widget class="QProgressBar" name="progressBar_2">
+     <widget class="QProgressBar" name="heightBar">
       <property name="geometry">
        <rect>
         <x>750</x>
@@ -429,7 +429,7 @@
        <number>0</number>
       </property>
      </widget>
-     <widget class="QProgressBar" name="progressBar_3">
+     <widget class="QProgressBar" name="proximityBar">
       <property name="geometry">
        <rect>
         <x>750</x>
@@ -440,6 +440,45 @@
       </property>
       <property name="value">
        <number>0</number>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_4">
+      <property name="geometry">
+       <rect>
+        <x>680</x>
+        <y>354</y>
+        <width>47</width>
+        <height>13</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Rotation:</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_5">
+      <property name="geometry">
+       <rect>
+        <x>680</x>
+        <y>395</y>
+        <width>47</width>
+        <height>13</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Height::</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_6">
+      <property name="geometry">
+       <rect>
+        <x>680</x>
+        <y>433</y>
+        <width>47</width>
+        <height>13</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Proximity:</string>
       </property>
      </widget>
     </widget>

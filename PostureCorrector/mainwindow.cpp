@@ -26,9 +26,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pushButton_Stop->setEnabled(false);
     ui->pushButton_Calibrate->setEnabled(false);
 
-    ui->progressBar->hide();
-    ui->progressBar_2->hide();
-    ui->progressBar_3->hide();
+    ui->heightBar->hide();
+    ui->proximityBar->hide();
+    ui->rotationBar->hide();
+
+    ui->label_4->hide();
+    ui->label_5->hide();
+    ui->label_6->hide();
 
     numberOfCalibrations = 0;
 
@@ -45,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(&checkPosture, SIGNAL(postureCalibrated()), this, SLOT(checkPosture_calibrated(void)));
 
     QObject::connect(&checkPosture, SIGNAL(postureStatus(int, double, double, double)), this, SLOT(processPosture(int, double, double, double)));
+    QObject::connect(&checkPosture, SIGNAL(postureState(int)), this, SLOT(processState(int)));
 
 
     // Rotation
@@ -131,6 +136,16 @@ void MainWindow::on_pushButton_Start_clicked()
         ui->pushButton_Stop->setEnabled(true);
         ui->pushButton_Calibrate->setEnabled(true);
 
+        if (numberOfCalibrations > 0) {
+            ui->heightBar->setEnabled(true);
+            ui->proximityBar->setEnabled(true);
+            ui->rotationBar->setEnabled(true);
+
+            ui->label_4->setEnabled(true);
+            ui->label_5->setEnabled(true);
+            ui->label_6->setEnabled(true);
+        }
+
         connect(timer, SIGNAL(timeout()), this, SLOT(update_window()));
         timer->start(50); //in miliseconds: 50ms = 0.05s => will grab a frame every 50ms = 20 frames/second
     }
@@ -141,6 +156,18 @@ void MainWindow::on_pushButton_Stop_clicked()
     ui->pushButton_Start->setEnabled(true);
     ui->pushButton_Stop->setEnabled(false);
     ui->pushButton_Calibrate->setEnabled(false);
+
+    ui->heightBar->setValue(0);
+    ui->proximityBar->setValue(0);
+    ui->rotationBar->setValue(0);
+
+    ui->heightBar->setEnabled(false);
+    ui->proximityBar->setEnabled(false);
+    ui->rotationBar->setEnabled(false);
+
+    ui->label_4->setEnabled(false);
+    ui->label_5->setEnabled(false);
+    ui->label_6->setEnabled(false);
 
     if (numberOfCalibrations > 0) {
         db.insertIntoDatabase(PAUSE);
@@ -171,9 +198,13 @@ void MainWindow::checkPosture_calibrated()
     if (numberOfCalibrations == 1) {
         ui->checkBox->setChecked(true);
         ui->pushButton_Calibrate->setText("Recalibrate");
-        ui->progressBar->show();
-        ui->progressBar_2->show();
-        ui->progressBar_3->show();
+        ui->heightBar->show();
+        ui->proximityBar->show();
+        ui->rotationBar->show();
+
+        ui->label_4->show();
+        ui->label_5->show();
+        ui->label_6->show();
 
         db.insertIntoDatabase(START);
     }
@@ -253,95 +284,123 @@ void MainWindow::processPosture(int currentPosture, double heightTracker, double
         else if (previousPosture == ROLL_LEFT) {
             index=4;
         }
-        qDebug() << index;
 
         timeInEachState[index] += chronometer.elapsed();
         chronometer.restart();
         previousPosture = currentPosture;
     }
 
-    if (heightTracker < 0) { ui->progressBar->setValue(0); }
-    else if (heightTracker > 1) { ui->progressBar->setValue(100); }
+    if (heightTracker < 0) { ui->heightBar->setValue(0); }
+    else if (heightTracker > 1) { ui->heightBar->setValue(100); }
     else {
         int ratio = trunc(heightTracker * 100);
-        ui->progressBar->setValue( ratio );
+        ui->heightBar->setValue( ratio );
     }
 
-    if (proximityTracker < 0) { ui->progressBar_2->setValue(0); }
-    else if (proximityTracker > 1) { ui->progressBar_2->setValue(100); }
+    if (proximityTracker < 0) { ui->proximityBar->setValue(0); }
+    else if (proximityTracker > 1) { ui->proximityBar->setValue(100); }
     else {
         int ratio = trunc(proximityTracker * 100);
-        ui->progressBar_2->setValue( ratio );
+        ui->proximityBar->setValue( ratio );
     }
 
     int ratio = abs(trunc(angleTracker * 100));
-    if (ratio > 100) { ui->progressBar_3->setValue(100); }
+    if (ratio > 100) { ui->rotationBar->setValue(100); }
     else {
-        ui->progressBar_3->setValue( ratio );
+        ui->rotationBar->setValue( ratio );
     }
 
-    for (int i=0; i<5; i++) {
+    /*for (int i=0; i<5; i++) {
         qDebug() << "Status " << i << " = " << timeInEachState[i]/1000;
     }
-    qDebug() << endl;
+    qDebug() << endl;*/
+}
+
+void MainWindow::processState(int state)
+{
+    qDebug() << "TO DB: " << state;
+    if (state == CORRECT_POSTURE) {
+        right_pose = true;
+        pause = false;
+        tray_notification(false, "");
+        if (!db.insertIntoDatabase(state)) {}
+    }
+    else if (state == LOW_HEIGHT) {
+        right_pose = false;
+        pause = false;
+        tray_notification(true, "Too low!");
+        if (!db.insertIntoDatabase(state)) {}
+    }
+    else if (state == TOO_CLOSE) {
+        right_pose = false;
+        pause = false;
+        tray_notification(true, "Too close!");
+        if (!db.insertIntoDatabase(state)) {}
+    }
+    else if (state == ROLL_RIGHT) {
+        right_pose = false;
+        pause = false;
+        tray_notification(true, "Rolling to the right!");
+        if (!db.insertIntoDatabase(state)) {}
+    }
+    else if (state == ROLL_LEFT) {
+        right_pose = false;
+        pause = false;
+        tray_notification(true, "Rolling to the left!");
+        if (!db.insertIntoDatabase(state)) {}
+    }
+    else if (state == COULD_NOT_DETECT) {
+        right_pose = false;
+        pause = false;
+        sound_alert();
+        tray_notification(true, "Not able to detect!");
+        if (!db.insertIntoDatabase(state)) {}
+    }
 
 
-
-
-
-
-
-    /*
-     *
-     * REDESIGN
-     * emit signal to db insert on database
-     *
-     */
-
-    //qDebug() << "Status: " << postureCheck;
-    if (right_pose || pause) {
+    /*if (right_pose || pause) {
         // Roll left
-        if (currentPosture == LOW_HEIGHT) {
+        if (state == LOW_HEIGHT) {
             right_pose = false;
             pause = false;
             //sound_alert();
             tray_notification(true, "Too low!");
-            if (!db.insertIntoDatabase(currentPosture)) {}
+            if (!db.insertIntoDatabase(state)) {}
         }
         // Roll right
-        else if (currentPosture == TOO_CLOSE) {
+        else if (state == TOO_CLOSE) {
             right_pose = false;
             pause = false;
             tray_notification(true, "Too close!");
-            if (!db.insertIntoDatabase(currentPosture)) {}
+            if (!db.insertIntoDatabase(state)) {}
         }
         // low height
-        else if (currentPosture == ROLL_RIGHT) {
+        else if (state == ROLL_RIGHT) {
             right_pose = false;
             pause = false;
             tray_notification(true, "Rolling to the right!");
-            if (!db.insertIntoDatabase(currentPosture)) {}
+            if (!db.insertIntoDatabase(state)) {}
         }
         // too close
-        else if (currentPosture == ROLL_LEFT) {
+        else if (state == ROLL_LEFT) {
             right_pose = false;
             pause = false;
             tray_notification(true, "Rolling to the left!");
-            if (!db.insertIntoDatabase(currentPosture)) {}
+            if (!db.insertIntoDatabase(state)) {}
         }
 
         if (pause) {
             pause = false;
-            if (!db.insertIntoDatabase(currentPosture)) {}
+            if (!db.insertIntoDatabase(state)) {}
         }
     } else if (!right_pose) {
-        if (currentPosture == CORRECT_POSTURE) {
+        if (state == CORRECT_POSTURE) {
             right_pose = true;
             pause = false;
             tray_notification(false, "");
-            if (!db.insertIntoDatabase(currentPosture)) {}
+            if (!db.insertIntoDatabase(state)) {}
         }
-    }
+    }*/
 }
 
 void MainWindow::set_postureRecords(std::vector<unsigned int> status, std::vector<QDateTime> dateTime)

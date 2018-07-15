@@ -7,9 +7,10 @@
 #define ROLL_RIGHT          4
 #define ROLL_LEFT           8
 
+#define COULD_NOT_DETECT    99
+
 #define START               100
 #define END                 101
 #define PAUSE               102
-#define COULD_NOT_DETECT    103
 
 #endif // LIST_OF_STATES_H
