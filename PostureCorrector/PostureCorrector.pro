@@ -37,7 +37,8 @@ HEADERS += \
         mainwindow.h \
         checkposture.h \
     databaseconnection.h \
-    list_of_states.h
+    list_of_states.h \
+    list_of_modes.h
 
 FORMS += \
         mainwindow.ui

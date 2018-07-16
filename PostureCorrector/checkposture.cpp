@@ -11,17 +11,11 @@ CheckPosture::CheckPosture() {
     state_to_emit = 0;
     state_chronometer = new QTimer(this);
     counting = false;
+
+    detectionMode = NOT_CALIBRATED;
 }
 
 CheckPosture::~CheckPosture() {}
-
-void CheckPosture::set_posture(std::vector<double> receivedPosture) { currentPosture = receivedPosture; }
-void CheckPosture::set_calibratedPosture(std::vector<double> receivedPosture) { calibratedPosture = receivedPosture; }
-
-void CheckPosture::calibratePosture()
-{
-    calibrate = true; calibrated = false;
-}
 
 void CheckPosture::emitState()
 {
@@ -30,6 +24,37 @@ void CheckPosture::emitState()
     emit postureState(state_to_emit);
 
     state = state_to_emit;
+}
+
+void CheckPosture::processMode(int mode)
+{
+    detectionMode = mode;
+
+    if (mode == CALIBRATE_SECOND_SCREEN) {
+        calibrate = true;
+    }
+
+    if (mode == CALIBRATE_FINISHED) {
+        // Update calibrated pose
+        calibratedLandmarks = temporaryCalibratedLandmarks;
+        calibratedPosture = temporaryCalibratedPosture;
+
+        calibrated = true;
+
+        // Change mode to execution
+        detectionMode = EXECUTION_MODE;
+    }
+
+    if (mode == CALIBRATE_CANCELED) {
+        // Pose was rejected, therefore calibrated variables are not updated
+        // Change mode to previous mode
+        if (calibrated) {
+            detectionMode = EXECUTION_MODE;
+        }
+        else {
+            detectionMode = NOT_CALIBRATED;
+        }
+    }
 }
 
 void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximityThreshold, int angleThreshold)
@@ -52,31 +77,31 @@ void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximity
         }
 
         // Get face position
-        std::vector<double> currentPosture = checkFacePosition(frame, faceLandmarks);
+        std::vector<double> posture = checkFacePosition(frame, faceLandmarks);
 
         // Set the current posture
-        set_posture(currentPosture);
+        currentPosture = posture;
 
-        // If calibrate == True, set the calibrated posture
+        // If user is in the second screen of calibration wizard
         if (calibrate) {
-            set_calibratedPosture(currentPosture);
-            calibratedLandmarks = faceLandmarks;
-            calibrated = true;
             calibrate = false;
+
+            temporaryCalibratedLandmarks = faceLandmarks;
+            temporaryCalibratedPosture = currentPosture;
 
             emit postureCalibrated();
         }
 
         // If calibrated, compare current posture with the calibrated one
-        if (calibrated) {
+        if (detectionMode == EXECUTION_MODE || (detectionMode == CALIBRATE_SECOND_SCREEN && calibrate == false) ) {
             checkPosture(heightThreshold, proximityThreshold, angleThreshold);
         }
     }
     else {
-        if (calibrated) {
+        // When there is no or more than one people in the frame
+        if (detectionMode == EXECUTION_MODE) {
             checkStatus(COULD_NOT_DETECT);
             emit postureStatus(COULD_NOT_DETECT, 0, 0, 0);
-
         }
     }
 }
@@ -172,36 +197,54 @@ int CheckPosture::checkPosture(int heightThreshold, int proximityThreshold, int 
     double proximityTracker = 0;
     double angleTracker = 0;
 
+
+    std::vector<double> postureToCompare;
+
+    if (detectionMode == EXECUTION_MODE) {
+        postureToCompare = calibratedPosture;
+    } else {
+        postureToCompare = temporaryCalibratedPosture;
+    }
+
     if (numberOfFaces != 1) {
         result = COULD_NOT_DETECT;
     } else {
         // Incorrect posture due to the height
-        heightTracker = ( currentPosture[1]-calibratedPosture[1] ) / heightThreshold ;
-        if (currentPosture[1] > calibratedPosture[1] + heightThreshold) { result = LOW_HEIGHT; }
+        heightTracker = ( currentPosture[1]-postureToCompare[1] ) / heightThreshold ;
+        if (currentPosture[1] > postureToCompare[1] + heightThreshold) { result = LOW_HEIGHT; }
 
         // Incorrect posture due to the proximity of the camera
-        proximityTracker = ( calibratedPosture[2]-currentPosture[2] ) / proximityThreshold ;
-        if (currentPosture[2] < calibratedPosture[2] - proximityThreshold) { result = TOO_CLOSE; }
+        proximityTracker = ( postureToCompare[2]-currentPosture[2] ) / proximityThreshold ;
+        if (currentPosture[2] < postureToCompare[2] - proximityThreshold) { result = TOO_CLOSE; }
 
         // Rotation
-        angleTracker = ( calibratedPosture[5]-currentPosture[5] ) / angleThreshold ;
+        angleTracker = ( postureToCompare[5]-currentPosture[5] ) / angleThreshold ;
         // Incorrect posture due to the rotation to the right
-        if (currentPosture[5] < calibratedPosture[5] - angleThreshold) { result = ROLL_RIGHT; }
+        if (currentPosture[5] < postureToCompare[5] - angleThreshold) { result = ROLL_RIGHT; }
 
         // Incorrect posture due to the rotation to the left
-        if (currentPosture[5] > calibratedPosture[5] + angleThreshold) { result = ROLL_LEFT; }
+        if (currentPosture[5] > postureToCompare[5] + angleThreshold) { result = ROLL_LEFT; }
 
 
         // Consider distance between the calibrated posture and current posture?
+        /*qDebug() << "\nx: " << currentPosture[0] << "\t" << postureToCompare[0];
+        qDebug() << "y: " << currentPosture[1] << "\t" << postureToCompare[1];
+        qDebug() << "z: " << currentPosture[2] << "\t" << postureToCompare[2];
+        double distance = currentPosture[0]-postureToCompare[0] ;
+        qDebug() << "proximity distance: " << (currentPosture[2]-postureToCompare[2])/100;
+        qDebug() << "height distance: " << (currentPosture[1]-postureToCompare[1])/100;*/
 
 
-
-        checkStatus(result);
+        if (detectionMode == EXECUTION_MODE) {
+            // Where it emits notifications to the user and insert to the database
+            checkStatus(result);
+        }
     }
 
+    // Where it updates the bars in the interface
     emit postureStatus(result, heightTracker, proximityTracker, angleTracker);
 
-    return result;
+    return 0;
 }
 
 int CheckPosture::checkStatus(int current_state)

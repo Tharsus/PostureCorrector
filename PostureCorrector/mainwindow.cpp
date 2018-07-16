@@ -24,15 +24,15 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->pushButton_Start->setEnabled(true);
     ui->pushButton_Stop->setEnabled(false);
-    ui->pushButton_Calibrate->setEnabled(false);
+    ui->pushButton_CalibrateMode->setEnabled(false);
+    ui->pushButton_CalibrateCancel->hide();
+    ui->pushButton_CalibrateNext->hide();
+    ui->pushButton_Calibrate->hide();
 
-    ui->heightBar->hide();
-    ui->proximityBar->hide();
-    ui->rotationBar->hide();
+    ui->InstructionLabel->hide();
 
-    ui->rotationLabel2->hide();
-    ui->heightLabel2->hide();
-    ui->proximityLabel2->hide();
+    showThresholds(false);
+    showResults(false);
 
     numberOfCalibrations = 0;
 
@@ -45,23 +45,27 @@ MainWindow::MainWindow(QWidget *parent) :
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setIcon(QIcon(":/myappico.png"));
 
-    QObject::connect(this, SIGNAL(calibrateButton_clicked(void)), &checkPosture, SLOT(calibratePosture()));
+    QObject::connect(this, SIGNAL(detectionMode(int)), &checkPosture, SLOT(processMode(int)));
     QObject::connect(&checkPosture, SIGNAL(postureCalibrated()), this, SLOT(checkPosture_calibrated(void)));
 
     QObject::connect(&checkPosture, SIGNAL(postureStatus(int, double, double, double)), this, SLOT(processPosture(int, double, double, double)));
     QObject::connect(&checkPosture, SIGNAL(postureState(int)), this, SLOT(processState(int)));
 
 
+    mode = 0;
     // Rotation
-    ui->rotationThreshold->setValue(20);
+    rotationThreshold = 20;
+    ui->rotationThreshold->setValue(rotationThreshold);
     ui->rotationDisplay->setValue(ui->rotationThreshold->value());
 
     // Height
-    ui->heightThreshold->setValue(200);
+    heightThreshold = 200;
+    ui->heightThreshold->setValue(heightThreshold);
     ui->heightDisplay->setValue(ui->heightThreshold->value());
 
     // Proximity
-    ui->proximityThreshold->setValue(1000);
+    proximityThreshold = 1000;
+    ui->proximityThreshold->setValue(proximityThreshold);
     ui->proximityDisplay->setValue(ui->proximityThreshold->value());
 
 
@@ -134,16 +138,11 @@ void MainWindow::on_pushButton_Start_clicked()
         qDebug() << "camera is opened";
         ui->pushButton_Start->setEnabled(false);
         ui->pushButton_Stop->setEnabled(true);
-        ui->pushButton_Calibrate->setEnabled(true);
+        ui->pushButton_CalibrateMode->setEnabled(true);
 
         if (numberOfCalibrations > 0) {
-            ui->heightBar->setEnabled(true);
-            ui->proximityBar->setEnabled(true);
-            ui->rotationBar->setEnabled(true);
-
-            ui->rotationLabel2->setEnabled(true);
-            ui->heightLabel2->setEnabled(true);
-            ui->proximityLabel2->setEnabled(true);
+            enableResults(true);
+            showResults(true);
         }
 
         connect(timer, SIGNAL(timeout()), this, SLOT(update_window()));
@@ -155,19 +154,9 @@ void MainWindow::on_pushButton_Stop_clicked()
 {
     ui->pushButton_Start->setEnabled(true);
     ui->pushButton_Stop->setEnabled(false);
-    ui->pushButton_Calibrate->setEnabled(false);
+    ui->pushButton_CalibrateMode->setEnabled(false);
 
-    ui->heightBar->setValue(0);
-    ui->proximityBar->setValue(0);
-    ui->rotationBar->setValue(0);
-
-    ui->heightBar->setEnabled(false);
-    ui->proximityBar->setEnabled(false);
-    ui->rotationBar->setEnabled(false);
-
-    ui->rotationLabel2->setEnabled(false);
-    ui->heightLabel2->setEnabled(false);
-    ui->proximityLabel2->setEnabled(false);
+    enableResults(false);
 
     if (numberOfCalibrations > 0) {
         db.insertIntoDatabase(PAUSE);
@@ -180,35 +169,111 @@ void MainWindow::on_pushButton_Stop_clicked()
     cap.release();
     qDebug() << "camera is closed";
 
-    //fill display with a black screen
+    // Fill display with a black screen
     cv::Mat image = cv::Mat::zeros(frame.size(),CV_8UC3);
     show_frame(image);
 }
 
+void MainWindow::on_pushButton_CalibrateMode_clicked()
+{
+    ui->pushButton_Start->hide();
+    ui->pushButton_Stop->hide();
+    ui->pushButton_CalibrateMode->hide();
+    ui->checkBox->hide();
+
+    ui->pushButton_CalibrateCancel->show();
+    ui->pushButton_CalibrateNext->show();
+
+    ui->InstructionLabel->show();
+
+    showResults(false);
+
+    emit detectionMode(CALIBRATE_MODE);
+}
+
+void MainWindow::on_pushButton_CalibrateCancel_clicked()
+{
+    ui->pushButton_Start->show();
+    ui->pushButton_Stop->show();
+    ui->pushButton_CalibrateMode->show();
+    ui->checkBox->show();
+
+    ui->InstructionLabel->hide();
+
+    showThresholds(false);
+
+    if (numberOfCalibrations > 0) {
+        showResults(true);
+    }
+    else {
+        showResults(false);
+    }
+
+    ui->pushButton_CalibrateCancel->hide();
+    ui->pushButton_CalibrateNext->hide();
+    ui->pushButton_Calibrate->hide();
+
+    emit detectionMode(CALIBRATE_CANCELED);
+    // Changes on trackers must be returned
+    mode = 0;
+    ui->rotationThreshold->setValue(rotationThreshold);
+    ui->rotationDisplay->setValue(ui->rotationThreshold->value());
+    ui->heightThreshold->setValue(heightThreshold);
+    ui->heightDisplay->setValue(ui->heightThreshold->value());
+    ui->proximityThreshold->setValue(proximityThreshold);
+    ui->proximityDisplay->setValue(ui->proximityThreshold->value());
+}
+
+void MainWindow::on_pushButton_CalibrateNext_clicked()
+{
+    ui->pushButton_CalibrateNext->hide();
+
+    ui->InstructionLabel->hide();
+
+    showThresholds(true);
+    showResults(true);
+
+    emit detectionMode(CALIBRATE_SECOND_SCREEN);
+    // Use sensibility of trackers
+    mode = 1;
+}
+
 void MainWindow::on_pushButton_Calibrate_clicked()
 {
-    ui->pushButton_Calibrate->setEnabled(false);
+    ui->pushButton_Start->show();
+    ui->pushButton_Stop->show();
+    ui->pushButton_CalibrateMode->show();
+    ui->checkBox->show();
 
-    emit calibrateButton_clicked();
+    ui->pushButton_CalibrateMode->show();
+    ui->pushButton_Calibrate->hide();
+    ui->pushButton_CalibrateCancel->hide();
+
+    showThresholds(false);
+
+    emit detectionMode(CALIBRATE_FINISHED);
+
+    numberOfCalibrations += 1;
+    if (numberOfCalibrations == 1) {
+        ui->checkBox->setChecked(true);
+        ui->pushButton_CalibrateMode->setText("Recalibrate");
+
+        enableResults(true);
+        showResults(true);
+
+        db.insertIntoDatabase(START);
+    }
+
+    mode = 0;
+    // Update user preferences
+    rotationThreshold = ui->rotationThreshold->value();
+    heightThreshold = ui->heightThreshold->value();
+    proximityThreshold = ui->proximityThreshold->value();
 }
 
 void MainWindow::checkPosture_calibrated()
 {
-    numberOfCalibrations += 1;
-    if (numberOfCalibrations == 1) {
-        ui->checkBox->setChecked(true);
-        ui->pushButton_Calibrate->setText("Recalibrate");
-        ui->heightBar->show();
-        ui->proximityBar->show();
-        ui->rotationBar->show();
-
-        ui->rotationLabel2->show();
-        ui->heightLabel2->show();
-        ui->proximityLabel2->show();
-
-        db.insertIntoDatabase(START);
-    }
-    ui->pushButton_Calibrate->setEnabled(true);
+    ui->pushButton_Calibrate->show();
 }
 
 void MainWindow::on_rotationThreshold_valueChanged(int value) { ui->rotationDisplay->setValue(value); }
@@ -220,7 +285,11 @@ void MainWindow::update_window()
 {
     cap >> frame;
 
-    checkPosture.checkFrame(frame, ui->heightThreshold->value(), ui->proximityThreshold->value(), ui->rotationThreshold->value());
+    if (mode == 0) {
+        checkPosture.checkFrame(frame, ui->heightThreshold->value(), ui->proximityThreshold->value(), ui->rotationThreshold->value());
+    } else {
+        checkPosture.checkFrame(frame, heightThreshold, proximityThreshold, rotationThreshold);
+    }
 
     // Flip horizontally so that image shown feels like watching yourself in a mirror
     cv::flip(frame, frame, +1);
@@ -269,7 +338,7 @@ void MainWindow::tray_notification(boolean activate, QString message)
 
 void MainWindow::processPosture(int currentPosture, double heightTracker, double proximityTracker, double angleTracker)
 {
-    //remove
+    //This should be done in Process State, here is only to update bars
     if (previousPosture != currentPosture && currentPosture != COULD_NOT_DETECT) {
         int index=0;
         if (previousPosture == LOW_HEIGHT) {
@@ -319,7 +388,7 @@ void MainWindow::processPosture(int currentPosture, double heightTracker, double
 void MainWindow::processState(int state)
 {
     qDebug() << "TO DB: " << state;
-    if (state == CORRECT_POSTURE) {
+    /*if (state == CORRECT_POSTURE) {
         right_pose = true;
         pause = false;
         tray_notification(false, "");
@@ -355,7 +424,7 @@ void MainWindow::processState(int state)
         sound_alert();
         tray_notification(true, "Not able to detect!");
         if (!db.insertIntoDatabase(state)) {}
-    }
+    }*/
 
 
     /*if (right_pose || pause) {
@@ -512,4 +581,73 @@ void MainWindow::initializeCharts()
     pieChartView->setRenderHint(QPainter::Antialiasing);
 
     ui->chart_2->addWidget(pieChartView);
+}
+
+void MainWindow::showThresholds(boolean option)
+{
+    if (option) {
+        ui->rotationLabel1->show();
+        ui->heightLabel1->show();
+        ui->proximityLabel1->show();
+
+        ui->rotationThreshold->show();
+        ui->heightThreshold->show();
+        ui->proximityThreshold->show();
+
+        ui->rotationDisplay->show();
+        ui->heightDisplay->show();
+        ui->proximityDisplay->show();
+    }
+    else {
+        ui->rotationLabel1->hide();
+        ui->heightLabel1->hide();
+        ui->proximityLabel1->hide();
+
+        ui->rotationThreshold->hide();
+        ui->heightThreshold->hide();
+        ui->proximityThreshold->hide();
+
+        ui->rotationDisplay->hide();
+        ui->heightDisplay->hide();
+        ui->proximityDisplay->hide();
+    }
+}
+
+void MainWindow::showResults(boolean option)
+{
+    if (option) {
+        ui->rotationLabel2->show();
+        ui->heightLabel2->show();
+        ui->proximityLabel2->show();
+
+        ui->rotationBar->show();
+        ui->heightBar->show();
+        ui->proximityBar->show();
+    }
+    else {
+        ui->rotationLabel2->hide();
+        ui->heightLabel2->hide();
+        ui->proximityLabel2->hide();
+
+        ui->rotationBar->hide();
+        ui->heightBar->hide();
+        ui->proximityBar->hide();
+    }
+}
+
+void MainWindow::enableResults(boolean option)
+{
+    ui->rotationLabel2->setEnabled(option);
+    ui->heightLabel2->setEnabled(option);
+    ui->proximityLabel2->setEnabled(option);
+
+    if (!option) {
+        ui->rotationBar->setValue(0);
+        ui->heightBar->setValue(0);
+        ui->proximityBar->setValue(0);
+    }
+
+    ui->rotationBar->setEnabled(option);
+    ui->heightBar->setEnabled(option);
+    ui->proximityBar->setEnabled(option);
 }

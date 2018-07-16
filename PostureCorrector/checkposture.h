@@ -22,6 +22,7 @@
 #include <QTimer>
 
 #include "list_of_states.h"
+#include "list_of_modes.h"
 
 class CheckPosture : public QObject
 {
@@ -34,8 +35,8 @@ public:
     void checkFrame(cv::Mat &, int heightThreshold, int proximityThreshold, int angleThreshold);
 
 public slots:
-    void calibratePosture();
     void emitState();
+    void processMode(int);
 
 signals:
     void postureCalibrated();
@@ -45,9 +46,6 @@ signals:
 private:
     dlib::frontal_face_detector detector;
     dlib::shape_predictor shape_predictor;
-
-    void set_posture(std::vector<double>);
-    void set_calibratedPosture(std::vector<double>);
 
     std::vector<double> checkFacePosition(cv::Mat, dlib::full_object_detection);
 
@@ -59,6 +57,9 @@ private:
     std::vector<double> calibratedPosture;
     dlib::full_object_detection calibratedLandmarks;
 
+    std::vector<double> temporaryCalibratedPosture;
+    dlib::full_object_detection temporaryCalibratedLandmarks;
+
     boolean calibrate;
     boolean calibrated;
 
@@ -67,6 +68,8 @@ private:
     int state_to_emit;
     QTimer *state_chronometer;
     boolean counting;
+
+    int detectionMode;
 };
 
 #endif // CHECKPOSTURE_H

@@ -48,6 +48,12 @@ private slots:
 
     void on_pushButton_Stop_clicked();
 
+    void on_pushButton_CalibrateMode_clicked();
+
+    void on_pushButton_CalibrateNext_clicked();
+
+    void on_pushButton_CalibrateCancel_clicked();
+
     void on_pushButton_Calibrate_clicked();
 
     void update_window();
@@ -65,7 +71,7 @@ private slots:
     void checkPosture_calibrated(void);
 
 signals:
-    void calibrateButton_clicked(void);
+    void detectionMode(int);
 
 private:
     Ui::MainWindow *ui;
@@ -93,6 +99,10 @@ private:
     void sound_alert();
     void tray_notification(boolean, QString);
 
+    int mode;
+    int rotationThreshold;
+    int heightThreshold;
+    int proximityThreshold;
 
 
     std::vector<QDate> days;
@@ -126,6 +136,10 @@ private:
 
 
     void initializeCharts(void);
+
+    void showThresholds(boolean);
+    void showResults(boolean);
+    void enableResults(boolean);
 };
 
 #endif // MAINWINDOW_H
