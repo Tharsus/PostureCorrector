@@ -251,10 +251,13 @@ int CheckPosture::checkStatus(int current_state)
 {
     if (not(counting)) {
         if (state != current_state) {
+            // If state is COULD_NOT_DETECT and current one is different, it changes instantly
             if (state == COULD_NOT_DETECT) {
                 state_to_emit = current_state;
                 emitState();
             }
+
+            // For every other case, it is set a chronometer
             else {
                 state_to_emit = current_state;
                 connect(state_chronometer, SIGNAL(timeout()), this, SLOT(emitState()));

@@ -362,27 +362,29 @@ void MainWindow::processPosture(int currentPosture, double heightTracker, double
     if (heightTracker < 0) { ui->heightBar->setValue(0); }
     else if (heightTracker > 1) { ui->heightBar->setValue(100); }
     else {
-        int ratio = trunc(heightTracker * 100);
+        int ratio = static_cast<int>(std::round(heightTracker * 100));
         ui->heightBar->setValue( ratio );
     }
 
     if (proximityTracker < 0) { ui->proximityBar->setValue(0); }
     else if (proximityTracker > 1) { ui->proximityBar->setValue(100); }
     else {
-        int ratio = trunc(proximityTracker * 100);
+        int ratio = static_cast<int>(trunc(proximityTracker * 100));
         ui->proximityBar->setValue( ratio );
     }
 
-    int ratio = abs(trunc(angleTracker * 100));
+    int ratio = abs(static_cast<int>(trunc(angleTracker * 100)));
     if (ratio > 100) { ui->rotationBar->setValue(100); }
     else {
         ui->rotationBar->setValue( ratio );
     }
 
-    /*for (int i=0; i<5; i++) {
+    /*// Show values for each state
+    for (int i=0; i<5; i++) {
         qDebug() << "Status " << i << " = " << timeInEachState[i]/1000;
     }
-    qDebug() << endl;*/
+    qDebug() << endl;
+    */
 }
 
 void MainWindow::processState(int state)
