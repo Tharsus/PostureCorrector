@@ -41,7 +41,7 @@
       <property name="geometry">
        <rect>
         <x>700</x>
-        <y>50</y>
+        <y>30</y>
         <width>75</width>
         <height>23</height>
        </rect>
@@ -54,7 +54,7 @@
       <property name="geometry">
        <rect>
         <x>750</x>
-        <y>300</y>
+        <y>270</y>
         <width>160</width>
         <height>22</height>
        </rect>
@@ -76,7 +76,7 @@
       <property name="geometry">
        <rect>
         <x>680</x>
-        <y>340</y>
+        <y>310</y>
         <width>47</width>
         <height>13</height>
        </rect>
@@ -89,7 +89,7 @@
       <property name="geometry">
        <rect>
         <x>750</x>
-        <y>340</y>
+        <y>310</y>
         <width>160</width>
         <height>22</height>
        </rect>
@@ -114,7 +114,7 @@
       <property name="geometry">
        <rect>
         <x>800</x>
-        <y>102</y>
+        <y>74</y>
         <width>70</width>
         <height>17</height>
        </rect>
@@ -136,7 +136,7 @@
       <property name="geometry">
        <rect>
         <x>680</x>
-        <y>380</y>
+        <y>350</y>
         <width>47</width>
         <height>13</height>
        </rect>
@@ -149,7 +149,7 @@
       <property name="geometry">
        <rect>
         <x>930</x>
-        <y>340</y>
+        <y>310</y>
         <width>41</width>
         <height>22</height>
        </rect>
@@ -177,7 +177,7 @@
       <property name="geometry">
        <rect>
         <x>930</x>
-        <y>380</y>
+        <y>350</y>
         <width>41</width>
         <height>22</height>
        </rect>
@@ -205,7 +205,7 @@
       <property name="geometry">
        <rect>
         <x>680</x>
-        <y>300</y>
+        <y>270</y>
         <width>47</width>
         <height>13</height>
        </rect>
@@ -218,7 +218,7 @@
       <property name="geometry">
        <rect>
         <x>800</x>
-        <y>50</y>
+        <y>30</y>
         <width>75</width>
         <height>23</height>
        </rect>
@@ -231,7 +231,7 @@
       <property name="geometry">
        <rect>
         <x>750</x>
-        <y>380</y>
+        <y>350</y>
         <width>160</width>
         <height>22</height>
        </rect>
@@ -253,7 +253,7 @@
       <property name="geometry">
        <rect>
         <x>930</x>
-        <y>300</y>
+        <y>270</y>
         <width>41</width>
         <height>22</height>
        </rect>
@@ -278,7 +278,7 @@
       <property name="geometry">
        <rect>
         <x>800</x>
-        <y>450</y>
+        <y>460</y>
         <width>75</width>
         <height>23</height>
        </rect>
@@ -407,7 +407,7 @@
       <property name="geometry">
        <rect>
         <x>750</x>
-        <y>160</y>
+        <y>110</y>
         <width>195</width>
         <height>23</height>
        </rect>
@@ -420,7 +420,7 @@
       <property name="geometry">
        <rect>
         <x>750</x>
-        <y>200</y>
+        <y>150</y>
         <width>195</width>
         <height>23</height>
        </rect>
@@ -433,7 +433,7 @@
       <property name="geometry">
        <rect>
         <x>750</x>
-        <y>240</y>
+        <y>190</y>
         <width>195</width>
         <height>23</height>
        </rect>
@@ -446,7 +446,7 @@
       <property name="geometry">
        <rect>
         <x>680</x>
-        <y>164</y>
+        <y>115</y>
         <width>47</width>
         <height>13</height>
        </rect>
@@ -459,20 +459,20 @@
       <property name="geometry">
        <rect>
         <x>680</x>
-        <y>205</y>
+        <y>155</y>
         <width>47</width>
         <height>13</height>
        </rect>
       </property>
       <property name="text">
-       <string>Height::</string>
+       <string>Height:</string>
       </property>
      </widget>
      <widget class="QLabel" name="proximityLabel2">
       <property name="geometry">
        <rect>
         <x>680</x>
-        <y>243</y>
+        <y>195</y>
         <width>47</width>
         <height>13</height>
        </rect>
@@ -485,7 +485,7 @@
       <property name="geometry">
        <rect>
         <x>700</x>
-        <y>100</y>
+        <y>70</y>
         <width>75</width>
         <height>23</height>
        </rect>
@@ -501,7 +501,7 @@
       <property name="geometry">
        <rect>
         <x>800</x>
-        <y>450</y>
+        <y>460</y>
         <width>75</width>
         <height>23</height>
        </rect>
@@ -517,7 +517,7 @@
       <property name="geometry">
        <rect>
         <x>700</x>
-        <y>450</y>
+        <y>460</y>
         <width>75</width>
         <height>23</height>
        </rect>
@@ -533,7 +533,7 @@
       <property name="geometry">
        <rect>
         <x>700</x>
-        <y>380</y>
+        <y>410</y>
         <width>200</width>
         <height>50</height>
        </rect>
@@ -546,6 +546,95 @@
       </property>
       <property name="wordWrap">
        <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="distanceLabel2">
+      <property name="geometry">
+       <rect>
+        <x>680</x>
+        <y>235</y>
+        <width>47</width>
+        <height>13</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Distance:</string>
+      </property>
+     </widget>
+     <widget class="QProgressBar" name="distanceBar">
+      <property name="geometry">
+       <rect>
+        <x>750</x>
+        <y>230</y>
+        <width>195</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="value">
+       <number>0</number>
+      </property>
+     </widget>
+     <widget class="QLabel" name="distanceLabel1">
+      <property name="geometry">
+       <rect>
+        <x>680</x>
+        <y>390</y>
+        <width>47</width>
+        <height>13</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Distance:</string>
+      </property>
+     </widget>
+     <widget class="QSlider" name="distanceThreshold">
+      <property name="geometry">
+       <rect>
+        <x>750</x>
+        <y>390</y>
+        <width>160</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="minimum">
+       <number>100</number>
+      </property>
+      <property name="maximum">
+       <number>1000</number>
+      </property>
+      <property name="value">
+       <number>1000</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="distanceDisplay">
+      <property name="geometry">
+       <rect>
+        <x>930</x>
+        <y>390</y>
+        <width>41</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+      <property name="buttonSymbols">
+       <enum>QAbstractSpinBox::NoButtons</enum>
+      </property>
+      <property name="minimum">
+       <number>100</number>
+      </property>
+      <property name="maximum">
+       <number>5000</number>
+      </property>
+      <property name="value">
+       <number>1000</number>
       </property>
      </widget>
     </widget>

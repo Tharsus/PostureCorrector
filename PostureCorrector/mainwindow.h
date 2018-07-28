@@ -64,7 +64,9 @@ private slots:
 
     void on_proximityThreshold_valueChanged(int value);
 
-    void processPosture(int, double, double, double);
+    void on_distanceThreshold_valueChanged(int value);
+
+    void processPosture(int, double, double, double, double);
 
     void processState(int);
 
@@ -103,6 +105,7 @@ private:
     int rotationThreshold;
     int heightThreshold;
     int proximityThreshold;
+    int distanceThreshold;
 
 
     std::vector<QDate> days;

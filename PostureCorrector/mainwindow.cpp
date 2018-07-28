@@ -48,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(this, SIGNAL(detectionMode(int)), &checkPosture, SLOT(processMode(int)));
     QObject::connect(&checkPosture, SIGNAL(postureCalibrated()), this, SLOT(checkPosture_calibrated(void)));
 
-    QObject::connect(&checkPosture, SIGNAL(postureStatus(int, double, double, double)), this, SLOT(processPosture(int, double, double, double)));
+    QObject::connect(&checkPosture, SIGNAL(postureStatus(int, double, double, double, double)), this, SLOT(processPosture(int, double, double, double, double)));
     QObject::connect(&checkPosture, SIGNAL(postureState(int)), this, SLOT(processState(int)));
 
 
@@ -67,6 +67,11 @@ MainWindow::MainWindow(QWidget *parent) :
     proximityThreshold = 1000;
     ui->proximityThreshold->setValue(proximityThreshold);
     ui->proximityDisplay->setValue(ui->proximityThreshold->value());
+
+    // Distance
+    distanceThreshold = 500;
+    ui->distanceThreshold->setValue(distanceThreshold);
+    ui->distanceDisplay->setValue(ui->distanceThreshold->value());
 
 
     if (db.openDatabase()) {
@@ -222,6 +227,8 @@ void MainWindow::on_pushButton_CalibrateCancel_clicked()
     ui->heightDisplay->setValue(ui->heightThreshold->value());
     ui->proximityThreshold->setValue(proximityThreshold);
     ui->proximityDisplay->setValue(ui->proximityThreshold->value());
+    ui->distanceThreshold->setValue(distanceThreshold);
+    ui->distanceDisplay->setValue(ui->distanceThreshold->value());
 }
 
 void MainWindow::on_pushButton_CalibrateNext_clicked()
@@ -269,6 +276,7 @@ void MainWindow::on_pushButton_Calibrate_clicked()
     rotationThreshold = ui->rotationThreshold->value();
     heightThreshold = ui->heightThreshold->value();
     proximityThreshold = ui->proximityThreshold->value();
+    distanceThreshold = ui->distanceThreshold->value();
 }
 
 void MainWindow::checkPosture_calibrated()
@@ -279,6 +287,7 @@ void MainWindow::checkPosture_calibrated()
 void MainWindow::on_rotationThreshold_valueChanged(int value) { ui->rotationDisplay->setValue(value); }
 void MainWindow::on_heightThreshold_valueChanged(int value) { ui->heightDisplay->setValue(value); }
 void MainWindow::on_proximityThreshold_valueChanged(int value) { ui->proximityDisplay->setValue(value); }
+void MainWindow::on_distanceThreshold_valueChanged(int value) { ui->distanceDisplay->setValue(value); }
 
 
 void MainWindow::update_window()
@@ -286,9 +295,9 @@ void MainWindow::update_window()
     cap >> frame;
 
     if (mode == 1) {
-        checkPosture.checkFrame(frame, ui->heightThreshold->value(), ui->proximityThreshold->value(), ui->rotationThreshold->value());
+        checkPosture.checkFrame(frame, ui->heightThreshold->value(), ui->proximityThreshold->value(), ui->rotationThreshold->value(), ui->distanceThreshold->value());
     } else {
-        checkPosture.checkFrame(frame, heightThreshold, proximityThreshold, rotationThreshold);
+        checkPosture.checkFrame(frame, heightThreshold, proximityThreshold, rotationThreshold, distanceThreshold);
     }
 
     // Flip horizontally so that image shown feels like watching yourself in a mirror
@@ -336,7 +345,7 @@ void MainWindow::tray_notification(boolean activate, QString message)
     }
 }
 
-void MainWindow::processPosture(int currentPosture, double heightTracker, double proximityTracker, double angleTracker)
+void MainWindow::processPosture(int currentPosture, double heightTracker, double proximityTracker, double angleTracker, double distanceTracker)
 {
     //This should be done in Process State, here is only to update bars
     if (previousPosture != currentPosture && currentPosture != COULD_NOT_DETECT) {
@@ -377,6 +386,13 @@ void MainWindow::processPosture(int currentPosture, double heightTracker, double
     if (ratio > 100) { ui->rotationBar->setValue(100); }
     else {
         ui->rotationBar->setValue( ratio );
+    }
+
+    if (distanceTracker < 0) { ui->distanceBar->setValue(0); }
+    else if (distanceTracker > 1) { ui->distanceBar->setValue(100); }
+    else {
+        int ratio = static_cast<int>(trunc(distanceTracker * 100));
+        ui->distanceBar->setValue( ratio );
     }
 
     /*// Show values for each state
@@ -591,27 +607,33 @@ void MainWindow::showThresholds(boolean option)
         ui->rotationLabel1->show();
         ui->heightLabel1->show();
         ui->proximityLabel1->show();
+        ui->distanceLabel1->show();
 
         ui->rotationThreshold->show();
         ui->heightThreshold->show();
         ui->proximityThreshold->show();
+        ui->distanceThreshold->show();
 
         ui->rotationDisplay->show();
         ui->heightDisplay->show();
         ui->proximityDisplay->show();
+        ui->distanceDisplay->show();
     }
     else {
         ui->rotationLabel1->hide();
         ui->heightLabel1->hide();
         ui->proximityLabel1->hide();
+        ui->distanceLabel1->hide();
 
         ui->rotationThreshold->hide();
         ui->heightThreshold->hide();
         ui->proximityThreshold->hide();
+        ui->distanceThreshold->hide();
 
         ui->rotationDisplay->hide();
         ui->heightDisplay->hide();
         ui->proximityDisplay->hide();
+        ui->distanceDisplay->hide();
     }
 }
 
@@ -621,19 +643,23 @@ void MainWindow::showResults(boolean option)
         ui->rotationLabel2->show();
         ui->heightLabel2->show();
         ui->proximityLabel2->show();
+        ui->distanceLabel2->show();
 
         ui->rotationBar->show();
         ui->heightBar->show();
         ui->proximityBar->show();
+        ui->distanceBar->show();
     }
     else {
         ui->rotationLabel2->hide();
         ui->heightLabel2->hide();
         ui->proximityLabel2->hide();
+        ui->distanceLabel2->hide();
 
         ui->rotationBar->hide();
         ui->heightBar->hide();
         ui->proximityBar->hide();
+        ui->distanceBar->hide();
     }
 }
 
@@ -642,14 +668,17 @@ void MainWindow::enableResults(boolean option)
     ui->rotationLabel2->setEnabled(option);
     ui->heightLabel2->setEnabled(option);
     ui->proximityLabel2->setEnabled(option);
+    ui->distanceLabel2->setEnabled(option);
 
     if (!option) {
         ui->rotationBar->setValue(0);
         ui->heightBar->setValue(0);
         ui->proximityBar->setValue(0);
+        ui->distanceBar->setValue(0);
     }
 
     ui->rotationBar->setEnabled(option);
     ui->heightBar->setEnabled(option);
     ui->proximityBar->setEnabled(option);
+    ui->distanceBar->setEnabled(option);
 }

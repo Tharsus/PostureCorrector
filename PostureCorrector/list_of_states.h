@@ -6,6 +6,7 @@
 #define TOO_CLOSE           2
 #define ROLL_RIGHT          4
 #define ROLL_LEFT           8
+#define TOO_FAR             16
 
 #define COULD_NOT_DETECT    99
 

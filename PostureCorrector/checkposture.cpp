@@ -57,7 +57,7 @@ void CheckPosture::processMode(int mode)
     }
 }
 
-void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximityThreshold, int angleThreshold)
+void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximityThreshold, int angleThreshold, int distanceThreshold)
 {
     // Convert opencv image to dlib image
     dlib::array2d<dlib::bgr_pixel> dlib_image;
@@ -94,14 +94,14 @@ void CheckPosture::checkFrame(cv::Mat &frame, int heightThreshold, int proximity
 
         // If calibrated, compare current posture with the calibrated one
         if (detectionMode == EXECUTION_MODE || (detectionMode == CALIBRATE_SECOND_SCREEN && calibrate == false) ) {
-            checkPosture(heightThreshold, proximityThreshold, angleThreshold);
+            checkPosture(heightThreshold, proximityThreshold, angleThreshold, distanceThreshold);
         }
     }
     else {
         // When there is no or more than one people in the frame
         if (detectionMode == EXECUTION_MODE) {
             checkStatus(COULD_NOT_DETECT);
-            emit postureStatus(COULD_NOT_DETECT, 0, 0, 0);
+            emit postureStatus(COULD_NOT_DETECT, 0, 0, 0, 0);
         }
     }
 }
@@ -190,12 +190,13 @@ std::vector<double> CheckPosture::checkFacePosition(cv::Mat frame, dlib::full_ob
  *
  *
  */
-int CheckPosture::checkPosture(int heightThreshold, int proximityThreshold, int angleThreshold)
+int CheckPosture::checkPosture(int heightThreshold, int proximityThreshold, int angleThreshold, int distanceThreshold)
 {
     int result = CORRECT_POSTURE;
     double heightTracker = 0;
     double proximityTracker = 0;
     double angleTracker = 0;
+    double distanceTracker = 0;
 
 
     std::vector<double> postureToCompare;
@@ -226,13 +227,17 @@ int CheckPosture::checkPosture(int heightThreshold, int proximityThreshold, int 
         if (currentPosture[5] > postureToCompare[5] + angleThreshold) { result = ROLL_LEFT; }
 
 
-        // Consider distance between the calibrated posture and current posture?
-        /*qDebug() << "\nx: " << currentPosture[0] << "\t" << postureToCompare[0];
-        qDebug() << "y: " << currentPosture[1] << "\t" << postureToCompare[1];
-        qDebug() << "z: " << currentPosture[2] << "\t" << postureToCompare[2];
-        //double distance = currentPosture[0]-postureToCompare[0] ;
-        qDebug() << "proximity distance: " << (currentPosture[2]-postureToCompare[2])/100;
-        qDebug() << "height distance: " << (currentPosture[1]-postureToCompare[1])/100;*/
+        // Incorrect posture due to the distance between current and calibrated posture
+        double distance = std::pow(
+                    std::pow(currentPosture[0] - postureToCompare[0], 2)
+                  + std::pow(currentPosture[1] - postureToCompare[1], 2)
+                  , 0.5);
+
+        distanceTracker = distance / distanceThreshold ;
+        if (distance > distanceThreshold) { result = TOO_FAR; }
+
+        qDebug() << "distance: " << distance;
+        qDebug() << "Result: " << result;
 
 
         if (detectionMode == EXECUTION_MODE) {
@@ -242,7 +247,7 @@ int CheckPosture::checkPosture(int heightThreshold, int proximityThreshold, int 
     }
 
     // Where it updates the bars in the interface
-    emit postureStatus(result, heightTracker, proximityTracker, angleTracker);
+    emit postureStatus(result, heightTracker, proximityTracker, angleTracker, distanceTracker);
 
     return 0;
 }

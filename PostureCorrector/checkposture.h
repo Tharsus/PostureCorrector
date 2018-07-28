@@ -32,7 +32,7 @@ public:
     CheckPosture();
     ~CheckPosture();
 
-    void checkFrame(cv::Mat &, int heightThreshold, int proximityThreshold, int angleThreshold);
+    void checkFrame(cv::Mat &, int heightThreshold, int proximityThreshold, int angleThreshold, int distanceThreshold);
 
 public slots:
     void emitState();
@@ -40,7 +40,7 @@ public slots:
 
 signals:
     void postureCalibrated();
-    void postureStatus(int, double, double, double);
+    void postureStatus(int, double, double, double, double);
     void postureState(int);
 
 private:
@@ -49,7 +49,7 @@ private:
 
     std::vector<double> checkFacePosition(cv::Mat, dlib::full_object_detection);
 
-    int checkPosture(int, int, int);
+    int checkPosture(int, int, int, int);
     int checkStatus(int);
 
     unsigned int numberOfFaces;
