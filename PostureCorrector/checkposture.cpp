@@ -236,9 +236,6 @@ int CheckPosture::checkPosture(int heightThreshold, int proximityThreshold, int 
         distanceTracker = distance / distanceThreshold ;
         if (distance > distanceThreshold) { result = TOO_FAR; }
 
-        qDebug() << "distance: " << distance;
-        qDebug() << "Result: " << result;
-
 
         if (detectionMode == EXECUTION_MODE) {
             // Where it emits notifications to the user and insert to the database
