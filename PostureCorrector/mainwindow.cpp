@@ -285,7 +285,7 @@ void MainWindow::update_window()
 {
     cap >> frame;
 
-    if (mode == 0) {
+    if (mode == 1) {
         checkPosture.checkFrame(frame, ui->heightThreshold->value(), ui->proximityThreshold->value(), ui->rotationThreshold->value());
     } else {
         checkPosture.checkFrame(frame, heightThreshold, proximityThreshold, rotationThreshold);

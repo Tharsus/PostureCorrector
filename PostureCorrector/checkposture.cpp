@@ -230,7 +230,7 @@ int CheckPosture::checkPosture(int heightThreshold, int proximityThreshold, int 
         /*qDebug() << "\nx: " << currentPosture[0] << "\t" << postureToCompare[0];
         qDebug() << "y: " << currentPosture[1] << "\t" << postureToCompare[1];
         qDebug() << "z: " << currentPosture[2] << "\t" << postureToCompare[2];
-        double distance = currentPosture[0]-postureToCompare[0] ;
+        //double distance = currentPosture[0]-postureToCompare[0] ;
         qDebug() << "proximity distance: " << (currentPosture[2]-postureToCompare[2])/100;
         qDebug() << "height distance: " << (currentPosture[1]-postureToCompare[1])/100;*/
 
