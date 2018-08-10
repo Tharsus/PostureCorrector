@@ -36,9 +36,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     numberOfCalibrations = 0;
 
-    right_pose = true;
-    pause=false;
-
     alertsound = new QMediaPlayer();
     alertsound->setMedia(QUrl("C://Windows//media//Windows Notify System Generic.wav"));
 
@@ -89,8 +86,8 @@ MainWindow::MainWindow(QWidget *parent) :
         qDebug() << "Duration of alert: " << durationOfAlert;
 
 
-        qDebug() << "end of reading";*/
-    } else { qDebug() << "error"; }
+        qDebug() << "End of reading";*/
+    } else { qDebug() << "Error"; }
 
 
 
@@ -133,14 +130,19 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::closeEvent(QCloseEvent *)
+{
+    hide();
+}
+
 void MainWindow::on_pushButton_Start_clicked()
 {
     cap.open(0);
 
     if(!cap.isOpened()){
-        qDebug() << "not able to open camera";
+        qDebug() << "Not able to open camera";
     } else {
-        qDebug() << "camera is opened";
+        qDebug() << "Camera is opened";
         ui->pushButton_Start->setEnabled(false);
         ui->pushButton_Stop->setEnabled(true);
         ui->pushButton_CalibrateMode->setEnabled(true);
@@ -148,6 +150,9 @@ void MainWindow::on_pushButton_Start_clicked()
         if (numberOfCalibrations > 0) {
             enableResults(true);
             showResults(true);
+
+            db.insertIntoDatabase(RESUME);
+            tray_notification(false, "");
         }
 
         connect(timer, SIGNAL(timeout()), this, SLOT(update_window()));
@@ -166,13 +171,11 @@ void MainWindow::on_pushButton_Stop_clicked()
     if (numberOfCalibrations > 0) {
         db.insertIntoDatabase(PAUSE);
         tray_notification(false, "");
-        right_pose=true;
-        pause = true;
     }
 
     disconnect(timer, SIGNAL(timeout()),this, SLOT(update_window()));
     cap.release();
-    qDebug() << "camera is closed";
+    qDebug() << "Camera is closed";
 
     // Fill display with a black screen
     cv::Mat image = cv::Mat::zeros(frame.size(),CV_8UC3);
@@ -333,13 +336,15 @@ void MainWindow::sound_alert()
 
 void MainWindow::tray_notification(boolean activate, QString message)
 {
-    //implementar redirecionamento do tray quando clicar
-    //implementar mensagem quando hover
-
     if (activate) {
+        if (trayIcon->supportsMessages()) {
+            trayIcon->setToolTip(message);
+            trayIcon->showMessage("Warning", message, QSystemTrayIcon::Warning);
+            trayIcon->setToolTip(message);
+        }
+
         trayIcon->show();
-        trayIcon->showMessage("Warning", message, QSystemTrayIcon::Warning);
-        trayIcon->messageClicked();
+        trayIcon->showMessage("Information", message, QSystemTrayIcon::Information);
     } else {
         trayIcon->hide();
     }
@@ -361,6 +366,9 @@ void MainWindow::processPosture(int currentPosture, double heightTracker, double
         }
         else if (previousPosture == ROLL_LEFT) {
             index=4;
+        }
+        else if (previousPosture == TOO_FAR) {
+            index=5;
         }
 
         timeInEachState[index] += chronometer.elapsed();
@@ -395,8 +403,9 @@ void MainWindow::processPosture(int currentPosture, double heightTracker, double
         ui->distanceBar->setValue( ratio );
     }
 
-    /*// Show values for each state
-    for (int i=0; i<5; i++) {
+    /*
+    // Show values for each state
+    for (int i=0; i<6; i++) {
         qDebug() << "Status " << i << " = " << timeInEachState[i]/1000;
     }
     qDebug() << endl;
@@ -405,95 +414,53 @@ void MainWindow::processPosture(int currentPosture, double heightTracker, double
 
 void MainWindow::processState(int state)
 {
-    qDebug() << "TO DB: " << state;
-    /*if (state == CORRECT_POSTURE) {
-        right_pose = true;
-        pause = false;
+    if (state == CORRECT_POSTURE) {
         tray_notification(false, "");
         if (!db.insertIntoDatabase(state)) {}
     }
-    else if (state == LOW_HEIGHT) {
-        right_pose = false;
-        pause = false;
+    if (state == LOW_HEIGHT) {
+        sound_alert();
         tray_notification(true, "Too low!");
         if (!db.insertIntoDatabase(state)) {}
     }
+    // Roll right
     else if (state == TOO_CLOSE) {
-        right_pose = false;
-        pause = false;
+        sound_alert();
         tray_notification(true, "Too close!");
         if (!db.insertIntoDatabase(state)) {}
     }
+    // low height
     else if (state == ROLL_RIGHT) {
-        right_pose = false;
-        pause = false;
+        sound_alert();
         tray_notification(true, "Rolling to the right!");
         if (!db.insertIntoDatabase(state)) {}
     }
+    // too close
     else if (state == ROLL_LEFT) {
-        right_pose = false;
-        pause = false;
+        sound_alert();
         tray_notification(true, "Rolling to the left!");
         if (!db.insertIntoDatabase(state)) {}
     }
-    else if (state == COULD_NOT_DETECT) {
-        right_pose = false;
-        pause = false;
+
+    // too far
+    else if (state == TOO_FAR) {
         sound_alert();
-        tray_notification(true, "Not able to detect!");
+        tray_notification(true, "Far from the calibrated position!");
         if (!db.insertIntoDatabase(state)) {}
-    }*/
+    }
 
-
-    /*if (right_pose || pause) {
-        // Roll left
-        if (state == LOW_HEIGHT) {
-            right_pose = false;
-            pause = false;
-            //sound_alert();
-            tray_notification(true, "Too low!");
-            if (!db.insertIntoDatabase(state)) {}
-        }
-        // Roll right
-        else if (state == TOO_CLOSE) {
-            right_pose = false;
-            pause = false;
-            tray_notification(true, "Too close!");
-            if (!db.insertIntoDatabase(state)) {}
-        }
-        // low height
-        else if (state == ROLL_RIGHT) {
-            right_pose = false;
-            pause = false;
-            tray_notification(true, "Rolling to the right!");
-            if (!db.insertIntoDatabase(state)) {}
-        }
-        // too close
-        else if (state == ROLL_LEFT) {
-            right_pose = false;
-            pause = false;
-            tray_notification(true, "Rolling to the left!");
-            if (!db.insertIntoDatabase(state)) {}
-        }
-
-        if (pause) {
-            pause = false;
-            if (!db.insertIntoDatabase(state)) {}
-        }
-    } else if (!right_pose) {
-        if (state == CORRECT_POSTURE) {
-            right_pose = true;
-            pause = false;
-            tray_notification(false, "");
-            if (!db.insertIntoDatabase(state)) {}
-        }
-    }*/
+    // Could not detect
+    else if (state == COULD_NOT_DETECT) {
+        tray_notification(true, "Far from the calibrated position!");
+        if (!db.insertIntoDatabase(state)) {}
+    }
 }
 
 void MainWindow::set_postureRecords(std::vector<unsigned int> status, std::vector<QDateTime> dateTime)
 {
     // Initialize variables
     numberOfAlerts = 0;
+    durationOfAlert.push_back(0);
     durationOfAlert.push_back(0);
     durationOfAlert.push_back(0);
     durationOfAlert.push_back(0);
@@ -520,21 +487,27 @@ void MainWindow::set_postureRecords(std::vector<unsigned int> status, std::vecto
             numberOfAlerts += 1;
             durationOfAlert.at(4) = dateTime.at(i-1).secsTo(dateTime.at(i));
         }
+        else if (status.at(i-1) == 16) {
+            numberOfAlerts += 1;
+            durationOfAlert.at(5) = dateTime.at(i-1).secsTo(dateTime.at(i));
+        }
     }
 }
 
 void MainWindow::initializeCharts()
 {
     // Bar Chart
-    set0 = new QtCharts::QBarSet("Low Height");
-    set1 = new QtCharts::QBarSet("Too Close");
-    set2 = new QtCharts::QBarSet("Rolling Right");
-    set3 = new QtCharts::QBarSet("Rolling Left");
+    set0 = new QtCharts::QBarSet("Height");
+    set1 = new QtCharts::QBarSet("Close");
+    set2 = new QtCharts::QBarSet("Right");
+    set3 = new QtCharts::QBarSet("Left");
+    set4 = new QtCharts::QBarSet("Far");
     for (unsigned i=0; i<alertsInEachState.size(); i++) {
         *set0 << alertsInEachState[i][0];
         *set1 << alertsInEachState[i][1];
         *set2 << alertsInEachState[i][2];
         *set3 << alertsInEachState[i][3];
+        *set4 << alertsInEachState[i][4];
     }
 
     QtCharts::QBarSeries *barSeries = new QtCharts::QBarSeries();
@@ -542,6 +515,7 @@ void MainWindow::initializeCharts()
     barSeries->append(set1);
     barSeries->append(set2);
     barSeries->append(set3);
+    barSeries->append(set4);
 
     QtCharts::QChart *barChart = new QtCharts::QChart();
     barChart->addSeries(barSeries);
@@ -571,9 +545,9 @@ void MainWindow::initializeCharts()
     // Pie Chart
     pieSeries = new QtCharts::QPieSeries();
 
-    int duration[5] = {0};
+    int duration[6] = {0};
     for (unsigned i=0; i<durationInEachState.size(); i++) {
-        for (unsigned j=0; j<5; j++) {
+        for (unsigned j=0; j<6; j++) {
             duration[j] += durationInEachState[i][j];
         }
     }
@@ -582,6 +556,7 @@ void MainWindow::initializeCharts()
     pieSeries->append("Too Close", duration[2]);
     pieSeries->append("Rolling Right", duration[3]);
     pieSeries->append("Rolling Left", duration[4]);
+    pieSeries->append("Too Far", duration[5]);
 
     /*for (int i=0; i<5;i++) {
         QtCharts::QPieSlice *slice = pieSeries->slices().at(i);

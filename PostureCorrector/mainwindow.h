@@ -43,6 +43,11 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    QSystemTrayIcon *trayIcon;
+
+protected:
+    void closeEvent(QCloseEvent *);
+
 private slots:
     void on_pushButton_Start_clicked();
 
@@ -86,11 +91,7 @@ private:
 
     unsigned int numberOfCalibrations;
 
-    boolean right_pose;
-    boolean pause;
-
     QMediaPlayer *alertsound;
-    QSystemTrayIcon *trayIcon;
 
     CheckPosture checkPosture;
 
@@ -122,8 +123,8 @@ private:
     // Variables from statistics
     int previousPosture;
     QTime chronometer;
-    int timeInEachState[5];
-    int numberOfAlarmsForEachState[4];
+    int timeInEachState[6];
+    int numberOfAlarmsForEachState[5];
     // Check previous and timeInEachState initialization
 
 
@@ -132,6 +133,7 @@ private:
     QtCharts::QBarSet *set1;
     QtCharts::QBarSet *set2;
     QtCharts::QBarSet *set3;
+    QtCharts::QBarSet *set4;
     QtCharts::QBarCategoryAxis *axis;
 
     // Pie Chart Variables

@@ -44,6 +44,8 @@ int DatabaseConnection::get_lastID()
 
 bool DatabaseConnection::insertIntoDatabase(int status)
 {
+    qDebug() << "Inserting into database: " << status;
+
     // Get current time and change for the DATETIME SQL format
     QDateTime currentTime = QDateTime::currentDateTime();
 
@@ -89,9 +91,9 @@ bool DatabaseConnection::fillChartVariables(std::vector<QDate> &days, std::vecto
     // Auxiliar variables for computing statistics
     int state[2];
     QDateTime dateTime[2];
-    // Initialize vector with [0, 0, 0, 0, 0]
-    std::vector<int> timeInEachState(5, 0);
-    std::vector<int> alerts(4, 0);
+    // Initialize vector with [0, 0, 0, 0, 0, 0]
+    std::vector<int> timeInEachState(6, 0);
+    std::vector<int> alerts(5, 0);
 
     // Auxiliar variables for looping through database
     int index = 1;
@@ -158,10 +160,10 @@ bool DatabaseConnection::fillChartVariables(std::vector<QDate> &days, std::vecto
                 durationInEachState.push_back(timeInEachState);
                 alertsInEachState.push_back(alerts);
 
-                for (unsigned i=0; i<5; i++) {
+                for (unsigned i=0; i<6; i++) {
                     timeInEachState.at(i)=0;
                 }
-                for (unsigned i=0; i<4; i++) {
+                for (unsigned i=0; i<5; i++) {
                     alerts.at(i)=0;
                 }
             }
@@ -187,6 +189,10 @@ bool DatabaseConnection::fillChartVariables(std::vector<QDate> &days, std::vecto
                 else if (state[0]==ROLL_LEFT) {
                     timeInEachState.at(4) += (dateTime[1].toMSecsSinceEpoch()-dateTime[0].toMSecsSinceEpoch());
                     alerts.at(3) += 1;
+                }
+                else if (state[0]==TOO_FAR) {
+                    timeInEachState.at(5) += (dateTime[1].toMSecsSinceEpoch()-dateTime[0].toMSecsSinceEpoch());
+                    alerts.at(4) += 1;
                 }
             }
 

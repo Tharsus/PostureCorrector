@@ -20,7 +20,7 @@ CheckPosture::~CheckPosture() {}
 void CheckPosture::emitState()
 {
     state_chronometer->stop();
-    qDebug() << "To be emitted: " << state_to_emit;
+    //qDebug() << "To be emitted: " << state_to_emit;
     emit postureState(state_to_emit);
 
     state = state_to_emit;

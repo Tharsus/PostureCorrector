@@ -13,5 +13,6 @@
 #define START               100
 #define END                 101
 #define PAUSE               102
+#define RESUME              103
 
 #endif // LIST_OF_STATES_H
