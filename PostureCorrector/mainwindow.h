@@ -129,11 +129,8 @@ private:
 
 
     // Bar Chart Variables
-    QtCharts::QBarSet *set0;
-    QtCharts::QBarSet *set1;
-    QtCharts::QBarSet *set2;
-    QtCharts::QBarSet *set3;
-    QtCharts::QBarSet *set4;
+    QtCharts::QBarSet *set[5];
+    QtCharts::QBarSeries *barSeries1;
     QtCharts::QBarCategoryAxis *axis;
 
     // Pie Chart Variables
@@ -141,6 +138,8 @@ private:
 
 
     void initializeCharts(void);
+
+    void updateBarChart(int);
 
     void showThresholds(boolean);
     void showResults(boolean);

@@ -422,24 +422,32 @@ void MainWindow::processState(int state)
         sound_alert();
         tray_notification(true, "Too low!");
         if (!db.insertIntoDatabase(state)) {}
+
+        updateBarChart(0);
     }
     // Roll right
     else if (state == TOO_CLOSE) {
         sound_alert();
         tray_notification(true, "Too close!");
         if (!db.insertIntoDatabase(state)) {}
+
+        updateBarChart(1);
     }
     // low height
     else if (state == ROLL_RIGHT) {
         sound_alert();
         tray_notification(true, "Rolling to the right!");
         if (!db.insertIntoDatabase(state)) {}
+
+        updateBarChart(2);
     }
     // too close
     else if (state == ROLL_LEFT) {
         sound_alert();
         tray_notification(true, "Rolling to the left!");
         if (!db.insertIntoDatabase(state)) {}
+
+        updateBarChart(3);
     }
 
     // too far
@@ -447,6 +455,8 @@ void MainWindow::processState(int state)
         sound_alert();
         tray_notification(true, "Far from the calibrated position!");
         if (!db.insertIntoDatabase(state)) {}
+
+        updateBarChart(4);
     }
 
     // Could not detect
@@ -497,25 +507,28 @@ void MainWindow::set_postureRecords(std::vector<unsigned int> status, std::vecto
 void MainWindow::initializeCharts()
 {
     // Bar Chart
-    set0 = new QtCharts::QBarSet("Height");
-    set1 = new QtCharts::QBarSet("Close");
-    set2 = new QtCharts::QBarSet("Right");
-    set3 = new QtCharts::QBarSet("Left");
-    set4 = new QtCharts::QBarSet("Far");
+    set[0] = new QtCharts::QBarSet("Height");
+    set[1] = new QtCharts::QBarSet("Close");
+    set[2] = new QtCharts::QBarSet("Right");
+    set[3] = new QtCharts::QBarSet("Left");
+    set[4] = new QtCharts::QBarSet("Far");
+
     for (unsigned i=0; i<alertsInEachState.size(); i++) {
-        *set0 << alertsInEachState[i][0];
-        *set1 << alertsInEachState[i][1];
-        *set2 << alertsInEachState[i][2];
-        *set3 << alertsInEachState[i][3];
-        *set4 << alertsInEachState[i][4];
+        for (unsigned int j=0; j<5; j++) {
+            *set[j] << alertsInEachState[i][j];
+
+            if ( (i==alertsInEachState.size()-1) && (QDate::currentDate()!=days[days.size()-1]) ) {
+                *set[j] << 0;
+            }
+        }
     }
 
     QtCharts::QBarSeries *barSeries = new QtCharts::QBarSeries();
-    barSeries->append(set0);
-    barSeries->append(set1);
-    barSeries->append(set2);
-    barSeries->append(set3);
-    barSeries->append(set4);
+    barSeries->append(set[0]);
+    barSeries->append(set[1]);
+    barSeries->append(set[2]);
+    barSeries->append(set[3]);
+    barSeries->append(set[4]);
 
     QtCharts::QChart *barChart = new QtCharts::QChart();
     barChart->addSeries(barSeries);
@@ -526,6 +539,11 @@ void MainWindow::initializeCharts()
     for (unsigned i=0; i<days.size(); i++) {
         QString day_month = QString::number(days[i].day()) + "/" + QString::number(days[i].month());
         categories << day_month;
+
+        if (QDate::currentDate()!=days[days.size()-1]) {
+            QString day_month = QString::number(QDate::currentDate().day()) + "/" + QString::number(QDate::currentDate().month());
+            categories << day_month;
+        }
     }
     axis = new QtCharts::QBarCategoryAxis();
     axis->append(categories);
@@ -574,6 +592,40 @@ void MainWindow::initializeCharts()
     pieChartView->setRenderHint(QPainter::Antialiasing);
 
     ui->chart_2->addWidget(pieChartView);
+}
+
+
+// Receives the integer related to the parameter of the bad pose
+void MainWindow::updateBarChart(int index)
+{
+    /*if (QDate::currentDate()==days[days.size()-1]) {
+        // Last element in the set is already related to the same day of this inclusion, so just need to increase by one
+        int position = static_cast<int>(days.size()) - 1;
+        set[index]->replace(position, set[index]->at(position) + 1);
+
+        qDebug() << "Valor atual: " << set[index]->at(position) << "\t posição: " << position;
+    } else {
+        // Last element is in a different day from the time the update is going to happen, needs to append and then include
+        for (int i=0; i<5; i++) {
+            if (i==index) {
+                *set[i] << 1;
+            }
+            else {
+                *set[i] << 10;
+            }
+        }
+
+        //não funcionou. Provavelmente vai precisar fazer o barchart global para dar append no set
+    }*/
+
+
+    if (QDate::currentDate()==days[days.size()-1]) {
+        int position = static_cast<int>(days.size()) - 1;
+        set[index]->replace(position, set[index]->at(position) + 1);
+    }
+    else {
+        int position = static_cast<int>(days.size());
+        set[index]->replace(position, set[index]->at(position) + 1);}
 }
 
 void MainWindow::showThresholds(boolean option)
