@@ -539,10 +539,10 @@ void MainWindow::initializeCharts()
         QString day_month = QString::number(days[i].day()) + "/" + QString::number(days[i].month());
         categories << day_month;
 
-        /*if (QDate::currentDate()!=days[days.size()-1]) {
+        if (QDate::currentDate()!=days[days.size()-1]) {
             QString day_month = QString::number(QDate::currentDate().day()) + "/" + QString::number(QDate::currentDate().month());
             categories << day_month;
-        }*/
+        }
     }
     axis = new QtCharts::QBarCategoryAxis();
     axis->append(categories);
