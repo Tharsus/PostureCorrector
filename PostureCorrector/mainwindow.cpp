@@ -91,12 +91,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-
-
-
-
-
-
     /*
      * Initialize Charts
      */
@@ -507,6 +501,7 @@ void MainWindow::set_postureRecords(std::vector<unsigned int> status, std::vecto
 void MainWindow::initializeCharts()
 {
     // Bar Chart
+    maxBarAxisY = 4;
     set[0] = new QtCharts::QBarSet("Height");
     set[1] = new QtCharts::QBarSet("Close");
     set[2] = new QtCharts::QBarSet("Right");
@@ -520,17 +515,21 @@ void MainWindow::initializeCharts()
             if ( (i==alertsInEachState.size()-1) && (QDate::currentDate()!=days[days.size()-1]) ) {
                 *set[j] << 0;
             }
+
+            if (maxBarAxisY < alertsInEachState[i][j]) {
+                maxBarAxisY = alertsInEachState[i][j];
+            }
         }
     }
 
-    QtCharts::QBarSeries *barSeries = new QtCharts::QBarSeries();
+    barSeries = new QtCharts::QBarSeries();
     barSeries->append(set[0]);
     barSeries->append(set[1]);
     barSeries->append(set[2]);
     barSeries->append(set[3]);
     barSeries->append(set[4]);
 
-    QtCharts::QChart *barChart = new QtCharts::QChart();
+    barChart = new QtCharts::QChart();
     barChart->addSeries(barSeries);
     barChart->setTitle("Number of Ocurrencies");
     barChart->setAnimationOptions(QtCharts::QChart::SeriesAnimations);
@@ -540,22 +539,23 @@ void MainWindow::initializeCharts()
         QString day_month = QString::number(days[i].day()) + "/" + QString::number(days[i].month());
         categories << day_month;
 
-        if (QDate::currentDate()!=days[days.size()-1]) {
+        /*if (QDate::currentDate()!=days[days.size()-1]) {
             QString day_month = QString::number(QDate::currentDate().day()) + "/" + QString::number(QDate::currentDate().month());
             categories << day_month;
-        }
+        }*/
     }
     axis = new QtCharts::QBarCategoryAxis();
     axis->append(categories);
+
     barChart->createDefaultAxes();
     barChart->setAxisX(axis, barSeries);
+    barChart->axisY()->setRange(0, maxBarAxisY);
 
     barChart->legend()->setVisible(true);
     barChart->legend()->setAlignment(Qt::AlignBottom);
 
-    QtCharts::QChartView *barChartView = new QtCharts::QChartView(barChart);
+    barChartView = new QtCharts::QChartView(barChart);
     barChartView->setRenderHint(QPainter::Antialiasing);
-
 
     ui->chart_1->addWidget(barChartView);
 
@@ -569,7 +569,7 @@ void MainWindow::initializeCharts()
             duration[j] += durationInEachState[i][j];
         }
     }
-    pieSeries->append("Correct", duration[0]);
+    //pieSeries->append("Correct", duration[0]);
     pieSeries->append("Low Height", duration[1]);
     pieSeries->append("Too Close", duration[2]);
     pieSeries->append("Rolling Right", duration[3]);
@@ -598,34 +598,28 @@ void MainWindow::initializeCharts()
 // Receives the integer related to the parameter of the bad pose
 void MainWindow::updateBarChart(int index)
 {
-    /*if (QDate::currentDate()==days[days.size()-1]) {
-        // Last element in the set is already related to the same day of this inclusion, so just need to increase by one
-        int position = static_cast<int>(days.size()) - 1;
-        set[index]->replace(position, set[index]->at(position) + 1);
-
-        qDebug() << "Valor atual: " << set[index]->at(position) << "\t posição: " << position;
-    } else {
-        // Last element is in a different day from the time the update is going to happen, needs to append and then include
-        for (int i=0; i<5; i++) {
-            if (i==index) {
-                *set[i] << 1;
-            }
-            else {
-                *set[i] << 10;
-            }
-        }
-
-        //não funcionou. Provavelmente vai precisar fazer o barchart global para dar append no set
-    }*/
-
-
     if (QDate::currentDate()==days[days.size()-1]) {
         int position = static_cast<int>(days.size()) - 1;
+
+        // Check y axis
+        if ( maxBarAxisY == static_cast<int>( set[index]->at(position) ) ) {
+            maxBarAxisY += 2;
+            barChart->axisY()->setRange(0, maxBarAxisY);
+        }
+
         set[index]->replace(position, set[index]->at(position) + 1);
     }
     else {
         int position = static_cast<int>(days.size());
-        set[index]->replace(position, set[index]->at(position) + 1);}
+
+        // Check y axis
+        if ( maxBarAxisY == static_cast<int>( set[index]->at(position) ) ) {
+            maxBarAxisY += 2;
+            barChart->axisY()->setRange(0, maxBarAxisY);
+        }
+
+        set[index]->replace(position, set[index]->at(position) + 1);
+    }
 }
 
 void MainWindow::showThresholds(boolean option)

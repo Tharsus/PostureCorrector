@@ -129,9 +129,12 @@ private:
 
 
     // Bar Chart Variables
+    int maxBarAxisY;
     QtCharts::QBarSet *set[5];
-    QtCharts::QBarSeries *barSeries1;
+    QtCharts::QBarSeries *barSeries;
+    QtCharts::QChart *barChart;
     QtCharts::QBarCategoryAxis *axis;
+    QtCharts::QChartView *barChartView;
 
     // Pie Chart Variables
     QtCharts::QPieSeries *pieSeries;
