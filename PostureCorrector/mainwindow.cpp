@@ -366,6 +366,11 @@ void MainWindow::processPosture(int currentPosture, double heightTracker, double
         }
 
         timeInEachState[index] += chronometer.elapsed();
+
+        if (index != 0) {
+            updatePieChart(index, chronometer.elapsed());
+        }
+
         chronometer.restart();
         previousPosture = currentPosture;
     }
@@ -576,7 +581,17 @@ void MainWindow::initializeCharts()
     pieSeries->append("Rolling Left", duration[4]);
     pieSeries->append("Too Far", duration[5]);
 
-    /*for (int i=0; i<5;i++) {
+    /* Showing the percentage of each label
+    pieSeries->setLabelsVisible();
+    pieSeries->setLabelsPosition(QtCharts::QPieSlice::LabelInsideHorizontal);
+
+    for(auto slice : pieSeries->slices()) {
+        slice->setLabel(QString("%1%").arg(100*slice->percentage(), 0, 'f', 1));
+        slice->setLabelBrush(QBrush(Qt::white));
+    }*/
+
+    /* Showing the Slice expanded
+    for (int i=0; i<5;i++) {
         QtCharts::QPieSlice *slice = pieSeries->slices().at(i);
         slice->setExploded();
         slice->setLabelVisible();
@@ -584,8 +599,7 @@ void MainWindow::initializeCharts()
 
     QtCharts::QChart *pieChart = new QtCharts::QChart();
     pieChart->addSeries(pieSeries);
-    //pieChart->setTitle("Time division between each states");
-    //pieChart->legend()->hide();
+    pieChart->setTitle("Time division between states");
     pieChart->legend()->setAlignment(Qt::AlignRight);
 
     QtCharts::QChartView *pieChartView = new QtCharts::QChartView(pieChart);
@@ -619,6 +633,19 @@ void MainWindow::updateBarChart(int index)
         }
 
         set[index]->replace(position, set[index]->at(position) + 1);
+    }
+}
+
+void MainWindow::updatePieChart(int index, int value)
+{
+    int i=1;
+    for(auto slice : pieSeries->slices()) {
+        if (i==index) {
+            qDebug() << slice->value();
+            slice->setValue(slice->value() + value);
+            qDebug() << slice->value();
+        }
+        i++;
     }
 }
 

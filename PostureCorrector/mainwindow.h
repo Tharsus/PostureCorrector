@@ -143,6 +143,7 @@ private:
     void initializeCharts(void);
 
     void updateBarChart(int);
+    void updatePieChart(int, int);
 
     void showThresholds(boolean);
     void showResults(boolean);
